@@ -44,6 +44,10 @@
     <Reference Include="MySql.Data">
       <HintPath>D:\SteamCMD\steamapps\common\U3DS\Modules\Rocket.Unturned\MySql.Data.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\SteamCMD\steamapps\common\U3DS\Unturned_Data\Managed\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Rocket.API">
       <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\U3DS\Extras\Rocket.Unturned\Rocket.API.dll</HintPath>
     </Reference>
@@ -119,6 +123,7 @@
     <Compile Include="CoolEvents.cs" />
     <Compile Include="DebugLogger.cs" />
     <Compile Include="MetadataEditor.cs" />
+    <Compile Include="NodeConnectionsSaver.cs" />
     <Compile Include="Nodes\ButtonNode.cs" />
     <Compile Include="Nodes\Node.cs" />
     <Compile Include="Nodes\ConsumerNode.cs" />
@@ -139,6 +144,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /Y "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\U3DS\Servers\Default\Rocket\Plugins"</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y "$(TargetPath)" "D:\SteamCMD\steamapps\common\U3DS\Servers\Default\Rocket\Plugins"</PostBuildEvent>
   </PropertyGroup>
 </Project>

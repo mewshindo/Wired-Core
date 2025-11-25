@@ -18,7 +18,9 @@ namespace Wired
         }
         public void Transmit(string frequency, RadioSignalType signal)
         {
-            List<ReceiverNode> receivers = Plugin.Instance.Nodes.OfType<ReceiverNode>().Where(r => r.Frequency == frequency).ToList();
+            if (!Plugin.Instance.LevelLoaded)
+                return;
+            List<ReceiverNode> receivers = Plugin.Instance.Nodes.Values.OfType<ReceiverNode>().Where(r => r.Frequency == frequency).ToList();
 
             ushort touchedreceivers = 0;
             foreach (ReceiverNode receiver in receivers)
@@ -34,12 +36,12 @@ namespace Wired
                 StopAllCoroutines();
                 StartCoroutine(DelayedUpdateNetworks());
             }
+            DebugLogger.Log($"Transmitted signal {signal} on frequency {frequency}, affected {touchedreceivers} receivers.");
         }
         IEnumerator DelayedUpdateNetworks()
         {
             yield return new WaitUntil(() => Plugin.Instance.UpdateFinished);
             Plugin.Instance.UpdateAllNetworks();
-
         }
     }
     public enum RadioSignalType

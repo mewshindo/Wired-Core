@@ -1,5 +1,8 @@
-﻿using SDG.Unturned;
+﻿using MySql.Data.MySqlClient.Properties;
+using SDG.Unturned;
 using Steamworks;
+using System.Collections;
+using UnityEngine;
 
 namespace Wired.Nodes
 {
@@ -50,7 +53,20 @@ namespace Wired.Nodes
         public void SetPowered(bool powered)
         {
             if (_spot != null)
+            {
                 BarricadeManager.ServerSetSpotPowered(_spot, powered);
+                
+                if (!_spot.isWired)
+                {
+                    Barricade bar = new Barricade(Plugin.Instance.Resources.generator_technical);
+                    Transform gen = BarricadeManager.dropNonPlantedBarricade(bar, _spot.transform.position, _spot.transform.rotation, 0, 0);
+                    if (gen != null)
+                    {
+                        BarricadeManager.sendFuel(gen, 512);
+                        BarricadeManager.ServerSetGeneratorPowered(gen.GetComponent<InteractableGenerator>(), true);
+                    }
+                }
+            }
             if (_coolConsumer != null)
                 _coolConsumer.SetActive(powered);
             if (_oven != null)
@@ -60,7 +76,13 @@ namespace Wired.Nodes
             if (_safezone != null)
                 BarricadeManager.ServerSetSafezonePowered(_safezone, powered);
             if (_charge != null && powered)
-                _charge.detonate((CSteamID)BarricadeManager.FindBarricadeByRootTransform(_charge.transform).GetServersideData().owner);
+                StartCoroutine(DelayedExplosion());
+        }
+
+        IEnumerator DelayedExplosion()
+        {
+            yield return new WaitUntil(() => Plugin.Instance.UpdateFinished);
+            _charge.detonate((CSteamID)BarricadeManager.FindBarricadeByRootTransform(_charge.transform).GetServersideData().owner);
         }
     }
 }

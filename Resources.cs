@@ -53,6 +53,7 @@ namespace Wired
     {
         WiringTool,
         RemoteTool,
+        ManualTablet,
         Switch,
         Timer,
         RemoteReceiver,

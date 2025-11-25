@@ -13,13 +13,15 @@ using Steamworks;
 using UnityEngine;
 using Wired.Consumers;
 using static UnityEngine.Random;
+using Rocket.Core.Steam;
+using System.IO;
 
 namespace Wired
 {
     public class Plugin : RocketPlugin<Config>
     {
         public static Plugin Instance;
-        private Resources _resources;
+        public Resources Resources;
 
         public RadioManager RadioManager;
 
@@ -31,12 +33,14 @@ namespace Wired
 
         private readonly List<CSteamID> _remoteToolBindingMode = new List<CSteamID>();
 
+        private readonly Dictionary<CSteamID, byte> _manualPage = new Dictionary<CSteamID, byte>();
+
         private readonly Dictionary<Transform, bool> _farmTransformsAffectedBySprinklers = new Dictionary<Transform, bool>();
         private readonly List<Sprinkler> _sprinklers = new List<Sprinkler>();
         protected override void Load()
         {
             Instance = this;
-            _resources = new Resources();
+            Resources = new Resources();
 
             Level.onLevelLoaded += onLevelLoaded;
             BarricadeManager.onBarricadeSpawned += onBarricadeSpawned;
@@ -65,7 +69,7 @@ namespace Wired
                             Nodes.Remove(c.instanceID);
                     }
                 }
-                else if (BarricadeManager.FindBarricadeByRootTransform(barricadeTransform).asset.health <= pendingTotalDamage)
+                else if (BarricadeManager.FindBarricadeByRootTransform(barricadeTransform).GetServersideData().barricade.isDead)
                 {
                     if (barricadeTransform.TryGetComponent<IElectricNode>(out var node))
                     {
@@ -100,6 +104,9 @@ namespace Wired
             NPCEventManager.onEvent -= NPCEventManager_onEvent;
             PlayerEquipment.OnInspectingUseable_Global -= PlayerEquipment_OnInspectingUseable_Global;
 
+            NodeConnectionsSaver saver = new NodeConnectionsSaver(Nodes, Path.Combine(Instance.Directory, "nodes.json"));
+            saver.SaveToJson();
+
             Harmony harmony = new Harmony("com.mew.powerShenanigans");
             harmony.UnpatchAll("com.mew.powerShenanigans");
             Instance = null;
@@ -129,9 +136,10 @@ namespace Wired
 
             sw.Stop();
         }
+        public bool LevelLoaded { get; set; } = false;
         private void onLevelLoaded(int level)
         {
-            _resources.Init();
+            Resources.Init();
 
             RadioManager = new GameObject("RadioManager", typeof(RadioManager)).GetComponent<RadioManager>();
             var stopwatch = Stopwatch.StartNew();
@@ -148,7 +156,8 @@ namespace Wired
                     "Switch",
                     "Timer",
                     "RemoteReceiver",
-                    "RemoteTransmitter"
+                    "RemoteTransmitter",
+                    "ManualTablet"
                 };
                 if (parser.HasAnyEntry(stringstoparse, out var foundentry))
                 {
@@ -158,22 +167,25 @@ namespace Wired
                         default:
                             break;
                         case "WiringTool":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.WiringTool);
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.WiringTool);
                             break;
                         case "RemoteTool":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteTool);
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteTool);
+                            break;
+                        case "ManualTablet":
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.ManualTablet);
                             break;
                         case "Switch":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.Switch);
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.Switch);
                             break;
                         case "Timer":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.Timer);
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.Timer);
                             break;
                         case "RemoteReceiver":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteReceiver);
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteReceiver);
                             break;
                         case "RemoteTransmitter":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteTransmitter);
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteTransmitter);
                             break;
                     }
                 }
@@ -182,20 +194,35 @@ namespace Wired
 
             foreach (BarricadeRegion reg in BarricadeManager.regions)
             {
-                foreach (BarricadeDrop drop in reg.drops)
+                for (int i = 0; i < reg.drops.Count; i++)
                 {
+                    var drop = reg.drops[i];
+                    if (drop == null)
+                        continue;
                     onBarricadeSpawned(reg, drop);
                 }
             }
+
+            NodeConnectionsSaver saver = new NodeConnectionsSaver(Nodes, Path.Combine(Directory, "nodes.json"));
+            if (Directory == null)
+                Console.WriteLine("directory null ????");
+            saver.LoadFromJson();
+
+
+            stopwatch.Stop();
             float milliseconds = stopwatch.ElapsedMilliseconds;
-            Console.WriteLine($"[Wired] Found: \n{_resources.WiredAssets.Where(x => x.Value == WiredAssetType.WiringTool).Count()}" +
-                $" wiring tools \n{_resources.WiredAssets.Where(x => x.Value == WiredAssetType.Switch).Count()}" +
-                $" switches, \n{_resources.WiredAssets.Where(x => x.Value == WiredAssetType.Timer).Count()} timers \n" +
+
+            Console.WriteLine($"[Wired] Found: \n" +
+                $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.WiringTool).Count()} wiring tools \n" +
+                $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.Switch).Count()} switches, \n" +
+                $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.Timer).Count()} timers \n" +
+                $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.ManualTablet).Count()} manual tablets \n" +
                 $"parsed {items.Count} item asset files, took {milliseconds} ms.");
+            LevelLoaded = true;
         }
         private void UseableGun_OnAimingChanged_Global(UseableGun obj)
         {
-            if (!_resources.WiredAssets.ContainsKey(obj.equippedGunAsset.GUID) && _resources.WiredAssets[obj.equippedGunAsset.GUID] != WiredAssetType.WiringTool)
+            if (!Resources.WiredAssets.ContainsKey(obj.equippedGunAsset.GUID) && Resources.WiredAssets[obj.equippedGunAsset.GUID] != WiredAssetType.WiringTool)
                 return;
 
             if (obj.isAiming)
@@ -211,7 +238,7 @@ namespace Wired
 
         private void UseableGun_onBulletHit(UseableGun gun, BulletInfo bullet, InputInfo hit, ref bool shouldAllow)
         {
-            if (_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID) && _resources.WiredAssets[gun.equippedGunAsset.GUID] == WiredAssetType.WiringTool)
+            if (Resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID) && Resources.WiredAssets[gun.equippedGunAsset.GUID] == WiredAssetType.WiringTool)
                 shouldAllow = false;
         }
         private bool DoesOwnDrop(BarricadeDrop drop, CSteamID steamid)
@@ -228,7 +255,7 @@ namespace Wired
 
         private void OnBulletSpawned(UseableGun gun, BulletInfo bullet)
         {
-            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID) && _resources.WiredAssets[gun.equippedGunAsset.GUID] != WiredAssetType.WiringTool)
+            if (!Resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID) && Resources.WiredAssets[gun.equippedGunAsset.GUID] != WiredAssetType.WiringTool)
                 return;
 
             var steamid = gun.player.channel.owner.playerID.steamID;
@@ -307,25 +334,61 @@ namespace Wired
         }
         private void onEquipRequested(PlayerEquipment equipment, ItemJar jar, ItemAsset asset, ref bool shouldAllow)
         {
-            if (_resources.WiredAssets.TryGetValue(asset.GUID, out WiredAssetType type))
-            {
-                if (type == WiredAssetType.WiringTool)
-                    DisplayNodes(equipment.player.channel.owner.playerID.steamID);
-            }
+            //if (_resources.WiredAssets.TryGetValue(asset.GUID, out WiredAssetType type))
+            //{
+            //    if (type == WiredAssetType.WiringTool)
+            //        DisplayNodes(equipment.player.channel.owner.playerID.steamID);
+            //}
         }
 
         private void onDequipRequested(Player player, PlayerEquipment equipment, ref bool shouldAllow)
         {
-            if (_resources.WiredAssets.TryGetValue(equipment.asset.GUID, out WiredAssetType type))
+            if (Resources.WiredAssets.TryGetValue(equipment.asset.GUID, out WiredAssetType type))
             {
                 if (type == WiredAssetType.WiringTool)
-                    foreach (Guid guid in _resources.nodeeffects)
+                    foreach (Guid guid in Resources.nodeeffects)
                         EffectManager.ClearEffectByGuid(guid, Provider.findTransportConnection(UnturnedPlayer.FromPlayer(player).CSteamID));
             }
         }
 
         private void PlayerEquipment_OnUseableChanged_Global(PlayerEquipment obj)
         {
+            if (obj.player == null)
+                return;
+            if (obj.asset == null)
+            {
+                if(obj.player != null)
+                    foreach (Guid guid in Resources.nodeeffects)
+                        EffectManager.ClearEffectByGuid(guid, Provider.findTransportConnection(obj.player.channel.owner.playerID.steamID));
+                return;
+            }
+            if (Resources.WiredAssets.TryGetValue(obj.asset.GUID, out WiredAssetType value))
+            {
+                if (value == WiredAssetType.WiringTool)
+                {
+                    DisplayNodes(obj.player.channel.owner.playerID.steamID);
+                }
+                else
+                {
+                    foreach (Guid guid in Resources.nodeeffects)
+                        EffectManager.ClearEffectByGuid(guid, Provider.findTransportConnection(obj.player.channel.owner.playerID.steamID));
+                }
+
+                if (value == WiredAssetType.ManualTablet)
+                {
+                    var steamid = obj.player.channel.owner.playerID.steamID;
+                    byte page = 0;
+                    if (_manualPage.ContainsKey(steamid))
+                        page = _manualPage[steamid];
+                    else
+                        _manualPage[steamid] = page;
+
+                    _manualPage[steamid] = page;
+
+                    ClientStaticMethod<byte, string>.Get(NPCEventManager.ReceiveBroadcast)
+                        .Invoke(SDG.NetTransport.ENetReliability.Reliable, Provider.findTransportConnection(steamid), 0, $"Wired:Tablet_{page}");
+                }
+            }
         }
 
         private void NPCEventManager_onEvent(Player instigatingPlayer, string eventId)
@@ -338,92 +401,137 @@ namespace Wired
                 if (equippeditem == null)
                     return;
 
-                if (!_resources.WiredAssets.ContainsKey(equippeditem.asset.GUID) || _resources.WiredAssets[equippeditem.asset.GUID] != WiredAssetType.RemoteTool)
-                    return;
-                if (eventId == "Wired:RemoteLeftClick")
+                if (Resources.WiredAssets.ContainsKey(equippeditem.asset.GUID) && Resources.WiredAssets[equippeditem.asset.GUID] == WiredAssetType.RemoteTool)
                 {
-                    if (instigatingPlayer.equipment.asset.GUID == null)
-                        return;
-                    if (!_resources.WiredAssets.ContainsKey(instigatingPlayer.equipment.asset.GUID) || _resources.WiredAssets[instigatingPlayer.equipment.asset.GUID] != WiredAssetType.RemoteTool)
-                        return;
-                    BarricadeDrop drop = Raycast.GetBarricade(instigatingPlayer, out _);
-                    if (drop == null)
+                    if (eventId == "Wired:RemoteLeftClick")
                     {
-                        MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
-                        if (metadataEditor.GetMetadata(out byte[] metadata))
+                        if (instigatingPlayer.equipment.asset.GUID == null)
+                            return;
+                        if (!Resources.WiredAssets.ContainsKey(instigatingPlayer.equipment.asset.GUID) || Resources.WiredAssets[instigatingPlayer.equipment.asset.GUID] != WiredAssetType.RemoteTool)
+                            return;
+                        BarricadeDrop drop = Raycast.GetBarricade(instigatingPlayer, out _);
+                        if (drop == null)
                         {
-                            if (metadata == null)
-                                return;
+                            MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
+                            if (metadataEditor.GetMetadata(out byte[] metadata))
+                            {
+                                if (metadata == null)
+                                    return;
+                                foreach (byte b in metadata)
+                                {
+                                    Console.Write(b + " ");
+                                }
+                                var fq = BitConverter.ToUInt16(metadata, 0);
+                                string freq = $"3.{fq}";
+                                RadioManager.Transmit($"3.{fq}", RadioSignalType.Toggle);
+                            }
+                            return;
+                        }
+
+                        if (!DoesOwnDrop(drop, instigatingPlayer.channel.owner.playerID.steamID))
+                            return;
+                        IElectricNode node = drop.model.GetComponent<IElectricNode>();
+                        if (node != null && node is ReceiverNode rr)
+                        {
+                            Console.WriteLine($"Tried assigning {rr.Frequency.Substring(2)} to metadata");
+                            MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
+                            metadataEditor.SetMetadata(uint.Parse(rr.Frequency.Substring(2)));
+
+                            instigatingPlayer.ServerShowHint($"Bound frequency {rr.Frequency} MHz to left click!", 3f);
+
+                            metadataEditor.GetMetadata(out byte[] metadata);
                             foreach (byte b in metadata)
                             {
                                 Console.Write(b + " ");
                             }
-                            var fq = BitConverter.ToUInt16(metadata, 0);
-                            string freq = $"3.{fq}";
-                            RadioManager.Transmit($"3.{fq}", RadioSignalType.Toggle);
-                        }
-                        return;
-                    }
-
-                    if (!DoesOwnDrop(drop, instigatingPlayer.channel.owner.playerID.steamID))
-                        return;
-                    IElectricNode node = drop.model.GetComponent<IElectricNode>();
-                    if (node != null && node is ReceiverNode rr)
-                    {
-                        Console.WriteLine($"Tried assigning {rr.Frequency.Substring(2)} to metadata");
-                        MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
-                        metadataEditor.SetMetadata(uint.Parse(rr.Frequency.Substring(2)));
-
-                        instigatingPlayer.ServerShowHint($"Bound frequency {rr.Frequency} MHz to left click!", 3f);
-
-                        metadataEditor.GetMetadata(out byte[] metadata);
-                        foreach (byte b in metadata)
-                        {
-                            Console.Write(b + " ");
                         }
                     }
-                }
-                else if (eventId == "Wired:RemoteRightClick")
-                {
-                    if (instigatingPlayer.equipment.asset.GUID == null)
-                        return;
-                    if (!_resources.WiredAssets.ContainsKey(instigatingPlayer.equipment.asset.GUID) || _resources.WiredAssets[instigatingPlayer.equipment.asset.GUID] != WiredAssetType.RemoteTool)
-                        return;
-                    BarricadeDrop drop = Raycast.GetBarricade(instigatingPlayer, out _);
-                    if (drop == null)
+                    else if (eventId == "Wired:RemoteRightClick")
                     {
-                        MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
-                        if (metadataEditor.GetMetadata(out byte[] metadata, 2))
+                        if (instigatingPlayer.equipment.asset.GUID == null)
+                            return;
+                        if (!Resources.WiredAssets.ContainsKey(instigatingPlayer.equipment.asset.GUID) || Resources.WiredAssets[instigatingPlayer.equipment.asset.GUID] != WiredAssetType.RemoteTool)
+                            return;
+                        BarricadeDrop drop = Raycast.GetBarricade(instigatingPlayer, out _);
+                        if (drop == null)
                         {
+                            MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
+                            if (metadataEditor.GetMetadata(out byte[] metadata, 2))
+                            {
+                                foreach (byte b in metadata)
+                                {
+                                    Console.Write(b + " ");
+                                }
+                                var fq = BitConverter.ToUInt16(metadata, 0);
+                                string freq = $"3.{fq}";
+                                RadioManager.Transmit($"3.{fq}", RadioSignalType.Toggle);
+                            }
+                            return;
+                        }
+
+                        if (!DoesOwnDrop(drop, instigatingPlayer.channel.owner.playerID.steamID))
+                            return;
+                        IElectricNode node = drop.model.GetComponent<IElectricNode>();
+                        if (node != null && node is ReceiverNode rr)
+                        {
+                            Console.WriteLine($"Tried assigning {rr.Frequency.Substring(2)} to metadata");
+                            MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
+                            metadataEditor.SetMetadata(uint.Parse(rr.Frequency.Substring(2)), 2);
+
+                            instigatingPlayer.ServerShowHint($"Bound frequency {rr.Frequency} MHz to right click!", 3f);
+
+                            metadataEditor.GetMetadata(out byte[] metadata);
                             foreach (byte b in metadata)
                             {
                                 Console.Write(b + " ");
                             }
-                            var fq = BitConverter.ToUInt16(metadata, 0);
-                            string freq = $"3.{fq}";
-                            RadioManager.Transmit($"3.{fq}", RadioSignalType.Toggle);
-                        }
-                        return;
-                    }
-
-                    if (!DoesOwnDrop(drop, instigatingPlayer.channel.owner.playerID.steamID))
-                        return;
-                    IElectricNode node = drop.model.GetComponent<IElectricNode>();
-                    if (node != null && node is ReceiverNode rr)
-                    {
-                        Console.WriteLine($"Tried assigning {rr.Frequency.Substring(2)} to metadata");
-                        MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
-                        metadataEditor.SetMetadata(uint.Parse(rr.Frequency.Substring(2)), 2);
-
-                        instigatingPlayer.ServerShowHint($"Bound frequency {rr.Frequency} MHz to right click!", 3f);
-
-                        metadataEditor.GetMetadata(out byte[] metadata);
-                        foreach (byte b in metadata)
-                        {
-                            Console.Write(b + " ");
                         }
                     }
                 }
+                else if(Resources.WiredAssets.ContainsKey(equippeditem.asset.GUID) && Resources.WiredAssets[equippeditem.asset.GUID] == WiredAssetType.ManualTablet)
+                {
+                    if (eventId == "Wired:TabletLeftClick")
+                    {
+                        Console.WriteLine("1");
+                        var steamid = instigatingPlayer.channel.owner.playerID.steamID;
+                        var arg = (byte)((instigatingPlayer != null && instigatingPlayer.channel != null && instigatingPlayer.channel.owner != null) ? ((byte)instigatingPlayer.channel.owner.channel) : 0);
+
+                        byte page = 0;
+                        if (_manualPage.ContainsKey(steamid))
+                            page = (byte)(_manualPage[steamid]+1);
+                        else
+                            _manualPage[steamid] = page;
+
+                        _manualPage[steamid] = (byte)(page);
+
+                        ClientStaticMethod<byte, string>.Get(NPCEventManager.ReceiveBroadcast)
+                            .Invoke(SDG.NetTransport.ENetReliability.Reliable, Provider.findTransportConnection(steamid), 0, $"Wired:Tablet_{page}");
+
+                    }
+                    else if (eventId == "Wired:TabletRightClick")
+                    {
+                        Console.WriteLine("2");
+                        var steamid = instigatingPlayer.channel.owner.playerID.steamID;
+                        var arg = (byte)((instigatingPlayer != null && instigatingPlayer.channel != null && instigatingPlayer.channel.owner != null) ? ((byte)instigatingPlayer.channel.owner.channel) : 0);
+
+                        byte page = 0;
+                        if (_manualPage.ContainsKey(steamid))
+                            page = _manualPage[steamid];
+                        else
+                            _manualPage[steamid] = page;
+
+                        if (page > 0)
+                            page--;
+                        _manualPage[steamid] = page;
+
+                        ClientStaticMethod<byte, string>.Get(NPCEventManager.ReceiveBroadcast)
+                            .Invoke(SDG.NetTransport.ENetReliability.Reliable, Provider.findTransportConnection(steamid), 0, $"Wired:Tablet_{page}");
+                    }
+                }
+            }
+            else
+            {
+                DebugLogger.Log("No instigating player for NPC event?");
             }
         }
         private void PlayerEquipment_OnInspectingUseable_Global(PlayerEquipment obj)
@@ -433,7 +541,7 @@ namespace Wired
             if (obj.player == null)
                 return;
 
-            if (!_resources.WiredAssets.TryGetValue(obj.asset.GUID, out WiredAssetType value))
+            if (!Resources.WiredAssets.TryGetValue(obj.asset.GUID, out WiredAssetType value))
                 return;
             if (value != WiredAssetType.RemoteTool)
                 return;
@@ -466,7 +574,7 @@ namespace Wired
 
         private void onBarricadeSpawned(BarricadeRegion region, BarricadeDrop drop)
         {
-            if (drop.model.GetComponent<IElectricNode>() != null)
+            if(drop.model.GetComponent<IElectricNode>() != null)
             {
                 return;
             }
@@ -475,21 +583,21 @@ namespace Wired
                 if (drop.model.GetComponent<SupplierNode>() == null)
                     drop.model.gameObject.AddComponent<SupplierNode>();
                 var node = drop.model.GetComponent<SupplierNode>();
-                Nodes[node.instanceID] = node;
+                Nodes.Add(node.instanceID, node);
                 if (drop.asset.id == 458) // Portable generator
                     node.Supply = 500;
                 if (drop.asset.id == 1230) // Industrial generator
                     node.Supply = 2500;
                 return;
             }
-            if (_resources.WiredAssets.TryGetValue(drop.asset.GUID, out WiredAssetType type))
+            if (Resources.WiredAssets.TryGetValue(drop.asset.GUID, out WiredAssetType type))
             {
                 if (type == WiredAssetType.Timer)
                 {
                     if (drop.model.GetComponent<TimerNode>() == null)
                         drop.model.gameObject.AddComponent<TimerNode>();
                     var node = drop.model.GetComponent<TimerNode>();
-                    Nodes[node.instanceID] = node;
+                    Nodes.Add(node.instanceID, node);
                     AssetParser parser = new AssetParser(drop.asset.getFilePath());
                     if (parser.TryGetFloat("Timer_Delay_Seconds", out var val))
                     {
@@ -503,7 +611,7 @@ namespace Wired
                     if (drop.model.GetComponent<SwitchNode>() == null)
                         drop.model.gameObject.AddComponent<SwitchNode>();
                     var node = drop.model.GetComponent<SwitchNode>();
-                    Nodes[node.instanceID] = node;
+                    Nodes.Add(node.instanceID, node);
                     return;
                 }
                 else if (type == WiredAssetType.RemoteReceiver)
@@ -511,7 +619,7 @@ namespace Wired
                     if (drop.model.GetComponent<ReceiverNode>() == null)
                         drop.model.gameObject.AddComponent<ReceiverNode>();
                     var node = drop.model.GetComponent<ReceiverNode>();
-                    Nodes[node.instanceID] = node;
+                    Nodes.Add(node.instanceID, node);
                     return;
                 }
                 else if (type == WiredAssetType.RemoteTransmitter)
@@ -523,7 +631,7 @@ namespace Wired
                         drop.model.gameObject.AddComponent<ConsumerNode>();
                     var node = drop.model.GetComponent<ConsumerNode>();
 
-                    Nodes[node.instanceID] = node;
+                    Nodes.Add(node.instanceID, node);
                     node.SetPowered(false);
                     node.Consumption = 100;
                 }
@@ -534,7 +642,7 @@ namespace Wired
                     drop.model.gameObject.AddComponent<ConsumerNode>();
                 var node = drop.model.GetComponent<ConsumerNode>();
 
-                Nodes[node.instanceID] = node;
+                Nodes.Add(node.instanceID, node);
                 node.SetPowered(false);
 
                 if (drop.asset.id == 459) // Spotlight
@@ -555,20 +663,6 @@ namespace Wired
                     {
                         node.Consumption = 200;
                         _sprinklers.Add(s);
-                    }
-                }
-            }
-
-            if (drop.model.GetComponent<InteractableSpot>() != null)
-            {
-                if (!drop.model.GetComponent<InteractableSpot>().isWired || !drop.model.GetComponent<InteractableSpot>().isPowered)
-                {
-                    Barricade bar = new Barricade(_resources.generator_technical);
-                    Transform gen = BarricadeManager.dropNonPlantedBarricade(bar, drop.model.position, drop.model.rotation, 0, 0);
-                    if (gen != null)
-                    {
-                        BarricadeManager.sendFuel(gen, 512);
-                        BarricadeManager.ServerSetGeneratorPowered(gen.GetComponent<InteractableGenerator>(), true);
                     }
                 }
             }
@@ -655,11 +749,11 @@ namespace Wired
         }
         private void UpdateNodesDisplay(CSteamID steamid)
         {
-            foreach (Guid guid in _resources.nodeeffects)
+            foreach (Guid guid in Resources.nodeeffects)
                 EffectManager.ClearEffectByGuid(guid, Provider.findTransportConnection(steamid));
             DisplayNodes(steamid);
         }
-        private bool Link(IElectricNode a, IElectricNode b)
+        private bool Link(IElectricNode a, IElectricNode b, bool updateNetworks = true)
         {
             if (a == null || b == null)
                 return false;
@@ -669,7 +763,9 @@ namespace Wired
             if (!b.Connections.Contains(a))
                 b.Connections.Add(a);
 
-            UpdateAllNetworks();
+            if(updateNetworks)
+                UpdateAllNetworks();
+
             return true;
         }
         private void sendEffectCool(UnturnedPlayer player, Vector3 dropPosition, EffectAsset asset)
@@ -719,21 +815,23 @@ namespace Wired
             foreach (BarricadeDrop drop in bfinder.GetBarricadesInRadius())
             {
                 Transform t = drop.model;
+                if (t == null)
+                    continue;
                 if (!t.TryGetComponent<IElectricNode>(out IElectricNode node))
                     continue;
                 if (!DoesOwnDrop(drop, steamid))
                     continue;
 
                 if (node is ConsumerNode)
-                    sendEffectCool(player, t.position, _resources.node_consumer);
+                    sendEffectCool(player, t.position, Resources.node_consumer);
                 else if (node is SupplierNode)
-                    sendEffectCool(player, t.position, _resources.node_power);
+                    sendEffectCool(player, t.position, Resources.node_power);
                 else if (node is SwitchNode)
-                    sendEffectCool(player, t.position, _resources.node_switch);
+                    sendEffectCool(player, t.position, Resources.node_switch);
                 else if (node is TimerNode)
-                    sendEffectCool(player, t.position, _resources.node_timer);
+                    sendEffectCool(player, t.position, Resources.node_timer);
                 else if (node is ReceiverNode)
-                    sendEffectCool(player, t.position, _resources.node_switch);
+                    sendEffectCool(player, t.position, Resources.node_switch);
                 else
                     continue;
 
@@ -752,18 +850,18 @@ namespace Wired
                     Vector3 start = ((MonoBehaviour)node).transform.position;
                     Vector3 end = ((MonoBehaviour)connected).transform.position;
 
-                    EffectAsset pathEffect = _resources.path_power;
+                    EffectAsset pathEffect = Resources.path_power;
 
                     if (node is SupplierNode || connected is SupplierNode)
-                        pathEffect = _resources.path_power;
+                        pathEffect = Resources.path_power;
                     else if (node is SwitchNode || connected is SwitchNode)
-                        pathEffect = _resources.path_switch;
+                        pathEffect = Resources.path_switch;
                     else if (node is TimerNode || connected is TimerNode)
-                        pathEffect = _resources.path_timer;
+                        pathEffect = Resources.path_timer;
                     else if (node is ReceiverNode || connected is ReceiverNode)
-                        pathEffect = _resources.path_switch;
+                        pathEffect = Resources.path_switch;
                     else
-                        pathEffect = _resources.path_consumer;
+                        pathEffect = Resources.path_consumer;
 
                     TracePath(player, start, end, pathEffect);
                 }
@@ -779,6 +877,9 @@ namespace Wired
 
             foreach (var node in Nodes.Values)
             {
+                if(node == null)
+                    continue;
+
                 if (visited.Contains(node))
                     continue;
 
@@ -828,6 +929,18 @@ namespace Wired
                     c.IncreaseVoltage(c.Consumption);
             }
             UpdateFarmsAffected();
+
+            foreach(SteamPlayer sp in Provider.clients)
+            {
+                if(sp == null)
+                    continue;
+                Player player = UnturnedPlayer.FromSteamPlayer(sp).Player;
+                if(player.equipment.asset == null)
+                    continue;
+                if (!Resources.WiredAssets.ContainsKey(player.equipment.asset.GUID) || Resources.WiredAssets[player.equipment.asset.GUID] != WiredAssetType.WiringTool)
+                    continue;
+                UpdateNodesDisplay(sp.playerID.steamID);
+            }
 
             stopwatch.Stop();
             DebugLogger.Log($"[PowerShenanigans] Updated networks in {stopwatch.ElapsedMilliseconds} ms");
@@ -935,7 +1048,7 @@ namespace Wired
                 }
                 if (__instance.gameObject.GetComponent<ReceiverNode>() != null)
                 {
-                    if (player.equipment.asset == null || !Instance._resources.WiredAssets.ContainsKey(player.equipment.asset.GUID) || Instance._resources.WiredAssets[player.equipment.asset.GUID] != WiredAssetType.RemoteTool)
+                    if (player.equipment.asset == null || !Instance.Resources.WiredAssets.ContainsKey(player.equipment.asset.GUID) || Instance.Resources.WiredAssets[player.equipment.asset.GUID] != WiredAssetType.RemoteTool)
                         return false;
 
                 }
