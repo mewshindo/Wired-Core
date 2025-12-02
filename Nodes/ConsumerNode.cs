@@ -1,5 +1,4 @@
-﻿using MySql.Data.MySqlClient.Properties;
-using SDG.Unturned;
+﻿using SDG.Unturned;
 using Steamworks;
 using System.Collections;
 using UnityEngine;

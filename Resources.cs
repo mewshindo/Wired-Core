@@ -12,8 +12,8 @@ namespace Wired
         public EffectAsset node_power;
         public EffectAsset path_power;
 
-        public EffectAsset node_switch;
-        public EffectAsset path_switch;
+        public EffectAsset node_gate;
+        public EffectAsset path_gate;
 
         public EffectAsset node_timer;
         public EffectAsset path_timer;
@@ -33,8 +33,8 @@ namespace Wired
             node_power = (EffectAsset)Assets.find(new Guid("f9f8409f96fe4624a280181523e5966d"));
             path_power = (EffectAsset)Assets.find(new Guid("aa4bf9e416b248f8b6ae4e48b30382a7"));
 
-            node_switch = (EffectAsset)Assets.find(new Guid("8b7f38d937a0403eb99e97b535d9df83"));
-            path_switch = (EffectAsset)Assets.find(new Guid("f8858fb1a24c4d70b1ca9a15e70606d5"));
+            node_gate = (EffectAsset)Assets.find(new Guid("8b7f38d937a0403eb99e97b535d9df83"));
+            path_gate = (EffectAsset)Assets.find(new Guid("f8858fb1a24c4d70b1ca9a15e70606d5"));
 
             node_timer = (EffectAsset)Assets.find(new Guid("510beb5970b94441a248baed6e0d172d"));
             path_timer = (EffectAsset)Assets.find(new Guid("e0377b8351c945a797350447bd513a1e"));
@@ -43,10 +43,10 @@ namespace Wired
 
             nodeeffects.Add(node_consumer.GUID);
             nodeeffects.Add(node_power.GUID);
-            nodeeffects.Add(node_switch.GUID);
+            nodeeffects.Add(node_gate.GUID);
             nodeeffects.Add(path_consumer.GUID);
             nodeeffects.Add(path_power.GUID);
-            nodeeffects.Add(path_switch.GUID);
+            nodeeffects.Add(path_gate.GUID);
             nodeeffects.Add(node_timer.GUID);
             nodeeffects.Add(path_timer.GUID);
         }
@@ -56,7 +56,7 @@ namespace Wired
         WiringTool,
         RemoteTool,
         ManualTablet,
-        Switch,
+        Gate,
         Timer,
         RemoteReceiver,
         RemoteTransmitter

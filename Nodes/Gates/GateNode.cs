@@ -1,9 +1,10 @@
 ﻿
 namespace Wired.Nodes
 {
-    public class SwitchNode : Node
+    public class GateNode : Node
     {
         public bool IsOn { get; private set; } = false;
+        public bool SwitchableByPlayer { get; set; } = false;
 
         public void Toggle(bool state)
         {

@@ -5,9 +5,9 @@ using Wired.Nodes;
 
 namespace Wired.Nodes
 {
-    public class PlayerDetector : SwitchNode
+    public class PlayerDetector : GateNode
     {
-        private SphereCollider _collider;
+        private Collider _collider;
         private Rigidbody _rigidbody;
         private float _radius = 2f;
         public PlayerDetector(float radius = 95.0f)
@@ -18,11 +18,19 @@ namespace Wired.Nodes
         {
             base.Awake();
 
-            _collider = gameObject.AddComponent<SphereCollider>();
-            _collider.isTrigger = true;
-            _collider.radius = 2f;
+            if(this.gameObject.transform.Find("Detector") != null)
+            {
+                _collider = this.gameObject.GetComponent<Collider>();
+            }
+            else
+            {
+                _collider = gameObject.AddComponent<SphereCollider>();
+                _collider.isTrigger = true;
+                ((SphereCollider)_collider).radius = 2f;
+            }
 
-            Console.WriteLine($"Initialized a playerdetector with radius {_collider.radius}");
+
+            Console.WriteLine($"Initialized a playerdetector with radius {((SphereCollider)_collider).radius}");
         }
         private void OnDestroy()
         {
@@ -43,7 +51,7 @@ namespace Wired.Nodes
             if (other.gameObject.CompareTag("Player"))
             {
                 BarricadeManager.ServerSetSpotPowered(gameObject.GetComponent<InteractableSpot>(), true);
-                gameObject.GetComponent<SwitchNode>().Toggle(true);
+                gameObject.GetComponent<GateNode>().Toggle(true);
                 Console.WriteLine($"Detected player {other.gameObject.name}");
             }
             else
@@ -56,7 +64,7 @@ namespace Wired.Nodes
             if (other.gameObject.CompareTag("Player"))
             {
                 BarricadeManager.ServerSetSpotPowered(gameObject.GetComponent<InteractableSpot>(), false);
-                gameObject.GetComponent<SwitchNode>().Toggle(false);
+                gameObject.GetComponent<GateNode>().Toggle(false);
                 Console.WriteLine($"Player {other.gameObject.name} left detection area");
             }
             else

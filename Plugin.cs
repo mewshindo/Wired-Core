@@ -157,7 +157,7 @@ namespace Wired
                 string[] stringstoparse = new string[] {
                     "WiringTool",
                     "RemoteTool",
-                    "Switch",
+                    "Gate",
                     "Timer",
                     "RemoteReceiver",
                     "RemoteTransmitter",
@@ -179,8 +179,8 @@ namespace Wired
                         case "ManualTablet":
                             Resources.WiredAssets.Add(asset.GUID, WiredAssetType.ManualTablet);
                             break;
-                        case "Switch":
-                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.Switch);
+                        case "Gate":
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.Gate);
                             break;
                         case "Timer":
                             Resources.WiredAssets.Add(asset.GUID, WiredAssetType.Timer);
@@ -218,7 +218,7 @@ namespace Wired
 
             Console.WriteLine($"[Wired] Found: \n" +
                 $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.WiringTool).Count()} wiring tools \n" +
-                $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.Switch).Count()} switches, \n" +
+                $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.Gate).Count()} gates, \n" +
                 $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.Timer).Count()} timers \n" +
                 $"{Resources.WiredAssets.Where(x => x.Value == WiredAssetType.ManualTablet).Count()} manual tablets \n" +
                 $"parsed {items.Count} item asset files, took {milliseconds} ms.");
@@ -610,11 +610,11 @@ namespace Wired
                     Console.WriteLine($"Created a timer with delay {val}");
                     return;
                 }
-                else if (type == WiredAssetType.Switch)
+                else if (type == WiredAssetType.Gate)
                 {
-                    if (drop.model.GetComponent<SwitchNode>() == null)
-                        drop.model.gameObject.AddComponent<SwitchNode>();
-                    var node = drop.model.GetComponent<SwitchNode>();
+                    if (drop.model.GetComponent<GateNode>() == null)
+                        drop.model.gameObject.AddComponent<GateNode>();
+                    var node = drop.model.GetComponent<GateNode>();
                     _nodes.Add(node.instanceID, node);
 
                     drop.model.gameObject.AddComponent<PlayerDetector>();
@@ -835,12 +835,12 @@ namespace Wired
                     sendEffectCool(player, t.position, Resources.node_consumer);
                 else if (node is SupplierNode)
                     sendEffectCool(player, t.position, Resources.node_power);
-                else if (node is SwitchNode)
-                    sendEffectCool(player, t.position, Resources.node_switch);
+                else if (node is GateNode)
+                    sendEffectCool(player, t.position, Resources.node_gate);
                 else if (node is TimerNode)
                     sendEffectCool(player, t.position, Resources.node_timer);
                 else if (node is RadioReceiverNode)
-                    sendEffectCool(player, t.position, Resources.node_switch);
+                    sendEffectCool(player, t.position, Resources.node_gate);
                 else
                     continue;
 
@@ -863,12 +863,12 @@ namespace Wired
 
                     if (node is SupplierNode || connected is SupplierNode)
                         pathEffect = Resources.path_power;
-                    else if (node is SwitchNode || connected is SwitchNode)
-                        pathEffect = Resources.path_switch;
+                    else if (node is GateNode || connected is GateNode)
+                        pathEffect = Resources.path_gate;
                     else if (node is TimerNode || connected is TimerNode)
                         pathEffect = Resources.path_timer;
                     else if (node is RadioReceiverNode || connected is RadioReceiverNode)
-                        pathEffect = Resources.path_switch;
+                        pathEffect = Resources.path_gate;
                     else
                         pathEffect = Resources.path_consumer;
 
@@ -987,7 +987,7 @@ namespace Wired
 
                 foreach (var neighbor in node.Connections)
                 {
-                    if (neighbor is SwitchNode sw && !sw.IsOn)
+                    if (neighbor is GateNode sw && !sw.IsOn)
                         continue; // block current flow
                     if (neighbor is RadioReceiverNode rr && !rr.IsOn)
                         continue; // block current flow
@@ -1071,9 +1071,9 @@ namespace Wired
                         return false;
 
                 }
-                if (__instance.gameObject.GetComponent<SwitchNode>() != null)
+                if (__instance.gameObject.GetComponent<GateNode>() != null)
                 {
-                    __instance.gameObject.GetComponent<SwitchNode>()?.Toggle(desiredPowered);
+                    __instance.gameObject.GetComponent<GateNode>()?.Toggle(desiredPowered);
                     return true;
                 }
                 return false;
@@ -1088,7 +1088,7 @@ namespace Wired
                 Console.WriteLine(string.Format("[PowerShenanigans] ReceiveToggleRequest from player {0} desiredLit={1}, __instance.name: {2}", context.GetPlayer()?.ToString() ?? "null", desiredLit, __instance.name));
                 if (__instance.name == "1272")
                 {
-                    __instance.gameObject.GetComponent<SwitchNode>()?.Toggle(desiredLit);
+                    __instance.gameObject.GetComponent<GateNode>()?.Toggle(desiredLit);
                 }
                 return true;
             }

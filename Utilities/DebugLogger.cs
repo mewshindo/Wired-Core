@@ -12,19 +12,19 @@ namespace Wired
         {
             if (Plugin.Instance.DevMode)
             {
-                Console.WriteLine($"[PowerShenanigans] {message}");
+                Console.WriteLine($"[Wired] {message}");
             }
         }
         public static void LogError(string message)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"[PowerShenanigans][ERROR] {message}");
+            Console.WriteLine($"[Wired][ERROR] {message}");
             Console.ResetColor();
         }
         public static void LogWarning(string message)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"[PowerShenanigans][WARNING] {message}");
+            Console.WriteLine($"[Wired][WARNING] {message}");
             Console.ResetColor();
         }
     }
