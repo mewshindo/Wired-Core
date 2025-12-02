@@ -115,27 +115,28 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssetParser.cs" />
-    <Compile Include="BarricadeFinder.cs" />
+    <Compile Include="Nodes\Gates\PlayerDetector.cs" />
+    <Compile Include="Utilities\AssetParser.cs" />
+    <Compile Include="Utilities\BarricadeFinder.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Consumers\CoolConsumer.cs" />
     <Compile Include="Consumers\Sprinkler.cs" />
-    <Compile Include="CoolEvents.cs" />
-    <Compile Include="DebugLogger.cs" />
-    <Compile Include="MetadataEditor.cs" />
-    <Compile Include="NodeConnectionsSaver.cs" />
-    <Compile Include="Nodes\ButtonNode.cs" />
+    <Compile Include="Utilities\CoolEvents.cs" />
+    <Compile Include="Utilities\DebugLogger.cs" />
+    <Compile Include="Utilities\MetadataEditor.cs" />
+    <Compile Include="Utilities\NodeConnectionsSaver.cs" />
+    <Compile Include="Nodes\Gates\ButtonNode.cs" />
     <Compile Include="Nodes\Node.cs" />
     <Compile Include="Nodes\ConsumerNode.cs" />
     <Compile Include="Nodes\IElectricNode.cs" />
-    <Compile Include="Consumers\Transmitter.cs" />
-    <Compile Include="Nodes\ReceiverNode.cs" />
+    <Compile Include="Consumers\RadioTransmitter.cs" />
+    <Compile Include="Nodes\Gates\RadioReceiverNode.cs" />
     <Compile Include="Nodes\SupplierNode.cs" />
-    <Compile Include="Nodes\SwitchNode.cs" />
-    <Compile Include="Nodes\TimerNode.cs" />
+    <Compile Include="Nodes\Gates\SwitchNode.cs" />
+    <Compile Include="Nodes\Gates\TimerNode.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Raycast.cs" />
+    <Compile Include="Utilities\Raycast.cs" />
     <Compile Include="RadioManager.cs" />
     <Compile Include="Resources.cs" />
   </ItemGroup>

@@ -1,7 +1,7 @@
 ﻿
 using SDG.Unturned;
 using System;
-using System.Collections;
+using System.Linq.Expressions;
 using UnityEngine;
 
 namespace Wired.Nodes
@@ -9,19 +9,30 @@ namespace Wired.Nodes
     /// <summary>
     /// A remote receiver acts as a switch
     /// </summary>
-    public class ReceiverNode : Node
+    public class RadioTransmitter : CoolConsumer
     {
-        public bool IsOn { get; private set; } = false;
         public string Frequency { get; private set; }
+        public float Range { get; private set; } = 50f;
         private InteractableSign _displaySign;
-        protected override void Awake()
+        private void Awake()
         {
-            base.Awake();
-            Frequency = (Mathf.Round((3f + UnityEngine.Random.Range(0.2f, 0.8f)) * 1000f) / 1000f).ToString();
-            DebugLogger.Log($"Assigned frequency {Frequency} to transmitter");
+            var parser = new AssetParser(BarricadeManager.FindBarricadeByRootTransform(transform).asset.getFilePath());
+            if (parser.TryGetFloat("Transmitter_Range_Meters", out var val))
+            {
+                Range = val;
+            }
             _displaySign = GetComponent<InteractableSign>();
             if (_displaySign != null)
             {
+                if (TrySetFrequency(_displaySign.text, null))
+                {
+                    Frequency = _displaySign.text.Split(' ')[1];
+                }
+                else
+                {
+                    Frequency = (Mathf.Round((3f + UnityEngine.Random.Range(0.2f, 0.8f)) * 1000f) / 1000f).ToString();
+                }
+                DebugLogger.Log($"Assigned frequency {Frequency} to transmitter");
                 BarricadeManager.ServerSetSignText(_displaySign, $"FREQ {Frequency}");
             }
         }
@@ -32,7 +43,7 @@ namespace Wired.Nodes
                 if (!signinput.StartsWith("FREQ "))
                     throw new Exception();
                 var freq = signinput.Split(' ')[1];
-                if (freq.Length != 5)
+                if(freq.Length != 5)
                     throw new Exception();
                 if (!float.TryParse(freq, out var f))
                     throw new Exception();
@@ -47,22 +58,19 @@ namespace Wired.Nodes
             }
             catch (Exception)
             {
-                instigator.ServerShowHint("Invalid frequency! Please use format: FREQ X.XXX (between 3.000 and 4.000)", 5f);
+                if(instigator != null)
+                    instigator.ServerShowHint("Invalid frequency! Please use format: FREQ X.XXX (between 3.000 and 4.000)", 2f);
                 return false;
             }
             return true;
         }
-        public void SetState(RadioSignalType state)
+        public override void SetActive(bool active)
         {
-            if(state == RadioSignalType.Toggle)
-            {
-                IsOn = !IsOn;
-                return;
-            }
-            IsOn = state == RadioSignalType.True;
+            TransmitSignal(active);
         }
-        public override void IncreaseVoltage(uint amount) { }
-
-        public override void DecreaseVoltage(uint amount) { }
+        private void TransmitSignal(bool state)
+        {
+            Plugin.Instance.RadioManager.Transmit(Frequency, state == true ? RadioSignalType.True : RadioSignalType.False);
+        }
     }
 }

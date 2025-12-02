@@ -15,6 +15,7 @@ using Wired.Consumers;
 using static UnityEngine.Random;
 using Rocket.Core.Steam;
 using System.IO;
+using System.Collections;
 
 namespace Wired
 {
@@ -27,7 +28,7 @@ namespace Wired
 
         public bool DevMode = true;
 
-        public readonly Dictionary<uint, IElectricNode> Nodes = new Dictionary<uint, IElectricNode>();
+        private readonly Dictionary<uint, IElectricNode> _nodes = new Dictionary<uint, IElectricNode>();
 
         private readonly Dictionary<CSteamID, Transform> _selectedNode = new Dictionary<CSteamID, Transform>();
 
@@ -65,17 +66,17 @@ namespace Wired
                     if (barricadeTransform.TryGetComponent<ConsumerNode>(out var c))
                     {
                         c.unInit();
-                        if (Nodes.ContainsKey(c.instanceID))
-                            Nodes.Remove(c.instanceID);
+                        if (_nodes.ContainsKey(c.instanceID))
+                            _nodes.Remove(c.instanceID);
                     }
                 }
                 else if (BarricadeManager.FindBarricadeByRootTransform(barricadeTransform).GetServersideData().barricade.isDead)
                 {
-                    if (barricadeTransform.TryGetComponent<IElectricNode>(out var node))
+                    if (barricadeTransform.TryGetComponent<Nodes.Node>(out var node))
                     {
                         node.unInit();
-                        if (Nodes.ContainsKey(node.instanceID))
-                            Nodes.Remove(node.instanceID);
+                        if (_nodes.ContainsKey(node.instanceID))
+                            _nodes.Remove(node.instanceID);
                     }
                 }
             };
@@ -104,7 +105,7 @@ namespace Wired
             NPCEventManager.onEvent -= NPCEventManager_onEvent;
             PlayerEquipment.OnInspectingUseable_Global -= PlayerEquipment_OnInspectingUseable_Global;
 
-            NodeConnectionsSaver saver = new NodeConnectionsSaver(Nodes, Path.Combine(Instance.Directory, "nodes.json"));
+            NodeConnectionsSaver saver = new NodeConnectionsSaver(_nodes, Path.Combine(Instance.Directory, "nodes.json"));
             saver.SaveToJson();
 
             Harmony harmony = new Harmony("com.mew.powerShenanigans");
@@ -142,6 +143,9 @@ namespace Wired
             Resources.Init();
 
             RadioManager = new GameObject("RadioManager", typeof(RadioManager)).GetComponent<RadioManager>();
+            RadioManager.Nodes = _nodes;
+
+
             var stopwatch = Stopwatch.StartNew();
 
             List<ItemAsset> items = new List<ItemAsset>();
@@ -203,7 +207,7 @@ namespace Wired
                 }
             }
 
-            NodeConnectionsSaver saver = new NodeConnectionsSaver(Nodes, Path.Combine(Directory, "nodes.json"));
+            NodeConnectionsSaver saver = new NodeConnectionsSaver(_nodes, Path.Combine(Directory, "nodes.json"));
             if (Directory == null)
                 Console.WriteLine("directory null ????");
             saver.LoadFromJson();
@@ -431,7 +435,7 @@ namespace Wired
                         if (!DoesOwnDrop(drop, instigatingPlayer.channel.owner.playerID.steamID))
                             return;
                         IElectricNode node = drop.model.GetComponent<IElectricNode>();
-                        if (node != null && node is ReceiverNode rr)
+                        if (node != null && node is RadioReceiverNode rr)
                         {
                             Console.WriteLine($"Tried assigning {rr.Frequency.Substring(2)} to metadata");
                             MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
@@ -472,7 +476,7 @@ namespace Wired
                         if (!DoesOwnDrop(drop, instigatingPlayer.channel.owner.playerID.steamID))
                             return;
                         IElectricNode node = drop.model.GetComponent<IElectricNode>();
-                        if (node != null && node is ReceiverNode rr)
+                        if (node != null && node is RadioReceiverNode rr)
                         {
                             Console.WriteLine($"Tried assigning {rr.Frequency.Substring(2)} to metadata");
                             MetadataEditor metadataEditor = new MetadataEditor(instigatingPlayer.equipment);
@@ -561,7 +565,7 @@ namespace Wired
             if (!DoesOwnDrop(drop, obj.player.channel.owner.playerID.steamID))
                 return;
             IElectricNode node = drop.model.GetComponent<IElectricNode>();
-            if (node is ReceiverNode rr)
+            if (node is RadioReceiverNode rr)
             {
                 obj.player.ServerShowHint($"Click a mouse button to bind this receiver to that button!", 3f);
             }
@@ -583,7 +587,7 @@ namespace Wired
                 if (drop.model.GetComponent<SupplierNode>() == null)
                     drop.model.gameObject.AddComponent<SupplierNode>();
                 var node = drop.model.GetComponent<SupplierNode>();
-                Nodes.Add(node.instanceID, node);
+                _nodes.Add(node.instanceID, node);
                 if (drop.asset.id == 458) // Portable generator
                     node.Supply = 500;
                 if (drop.asset.id == 1230) // Industrial generator
@@ -597,7 +601,7 @@ namespace Wired
                     if (drop.model.GetComponent<TimerNode>() == null)
                         drop.model.gameObject.AddComponent<TimerNode>();
                     var node = drop.model.GetComponent<TimerNode>();
-                    Nodes.Add(node.instanceID, node);
+                    _nodes.Add(node.instanceID, node);
                     AssetParser parser = new AssetParser(drop.asset.getFilePath());
                     if (parser.TryGetFloat("Timer_Delay_Seconds", out var val))
                     {
@@ -611,38 +615,43 @@ namespace Wired
                     if (drop.model.GetComponent<SwitchNode>() == null)
                         drop.model.gameObject.AddComponent<SwitchNode>();
                     var node = drop.model.GetComponent<SwitchNode>();
-                    Nodes.Add(node.instanceID, node);
+                    _nodes.Add(node.instanceID, node);
+
+                    drop.model.gameObject.AddComponent<PlayerDetector>();
+                    Console.WriteLine($"Added a playerdetector to {drop.instanceID}");
+
                     return;
                 }
                 else if (type == WiredAssetType.RemoteReceiver)
                 {
-                    if (drop.model.GetComponent<ReceiverNode>() == null)
-                        drop.model.gameObject.AddComponent<ReceiverNode>();
-                    var node = drop.model.GetComponent<ReceiverNode>();
-                    Nodes.Add(node.instanceID, node);
+                    if (drop.model.GetComponent<RadioReceiverNode>() == null)
+                        drop.model.gameObject.AddComponent<RadioReceiverNode>();
+                    var node = drop.model.GetComponent<RadioReceiverNode>();
+                    _nodes.Add(node.instanceID, node);
                     return;
                 }
                 else if (type == WiredAssetType.RemoteTransmitter)
                 {
-                    if (drop.model.GetComponent<Transmitter>() == null)
-                        drop.model.gameObject.AddComponent<Transmitter>();
+                    if (drop.model.GetComponent<RadioTransmitter>() == null)
+                        drop.model.gameObject.AddComponent<RadioTransmitter>();
 
                     if (drop.model.GetComponent<ConsumerNode>() == null)
                         drop.model.gameObject.AddComponent<ConsumerNode>();
                     var node = drop.model.GetComponent<ConsumerNode>();
 
-                    Nodes.Add(node.instanceID, node);
+                    _nodes.Add(node.instanceID, node);
                     node.SetPowered(false);
                     node.Consumption = 100;
                 }
+                return;
             }
-            else if (IsConsumer(drop.model))
+            if (IsConsumer(drop.model))
             {
                 if (drop.model.GetComponent<ConsumerNode>() == null)
                     drop.model.gameObject.AddComponent<ConsumerNode>();
                 var node = drop.model.GetComponent<ConsumerNode>();
 
-                Nodes.Add(node.instanceID, node);
+                _nodes.Add(node.instanceID, node);
                 node.SetPowered(false);
 
                 if (drop.asset.id == 459) // Spotlight
@@ -655,7 +664,7 @@ namespace Wired
                 if (drop.model.GetComponent<CoolConsumer>() != null)
                 {
                     var cc = drop.model.GetComponent<CoolConsumer>();
-                    if (cc is Transmitter t)
+                    if (cc is RadioTransmitter t)
                     {
                         node.Consumption = 100;
                     }
@@ -676,7 +685,7 @@ namespace Wired
             BarricadeDrop drop = BarricadeManager.FindBarricadeByRootTransform(sign.transform);
             if (drop == null)
                 return;
-            var node = drop.model.GetComponent<Transmitter>();
+            var node = drop.model.GetComponent<RadioTransmitter>();
             if (node != null)
             {
                 if (!node.TrySetFrequency(text, UnturnedPlayer.FromCSteamID(instigator).Player))
@@ -686,7 +695,7 @@ namespace Wired
                 }
                 shouldAllow = true;
             }
-            var node2 = drop.model.GetComponent<ReceiverNode>();
+            var node2 = drop.model.GetComponent<RadioReceiverNode>();
             if (node2 != null)
             {
                 if (!node2.TrySetFrequency(text, UnturnedPlayer.FromCSteamID(instigator).Player))
@@ -705,7 +714,7 @@ namespace Wired
                 return;
             }
 
-            drop.model.TryGetComponent<IElectricNode>(out var nodeComp);
+            drop.model.TryGetComponent<Nodes.Node>(out var nodeComp);
             if (nodeComp != null)
             {
                 nodeComp.unInit();
@@ -723,7 +732,7 @@ namespace Wired
             }
 
             uint id = drop.instanceID;
-            if (!Nodes.TryGetValue(id, out var node))
+            if (!_nodes.TryGetValue(id, out var node))
             {
                 Console.WriteLine($"No id in _nodes: {drop.instanceID}");
                 return;
@@ -735,7 +744,7 @@ namespace Wired
             }
 
             node.Connections.Clear();
-            Nodes.Remove(id);
+            _nodes.Remove(id);
             UpdateNodesDisplay(instigatorClient.playerID.steamID);
             UpdateAllNetworks();
             UpdateFarmsAffected();
@@ -830,7 +839,7 @@ namespace Wired
                     sendEffectCool(player, t.position, Resources.node_switch);
                 else if (node is TimerNode)
                     sendEffectCool(player, t.position, Resources.node_timer);
-                else if (node is ReceiverNode)
+                else if (node is RadioReceiverNode)
                     sendEffectCool(player, t.position, Resources.node_switch);
                 else
                     continue;
@@ -858,7 +867,7 @@ namespace Wired
                         pathEffect = Resources.path_switch;
                     else if (node is TimerNode || connected is TimerNode)
                         pathEffect = Resources.path_timer;
-                    else if (node is ReceiverNode || connected is ReceiverNode)
+                    else if (node is RadioReceiverNode || connected is RadioReceiverNode)
                         pathEffect = Resources.path_switch;
                     else
                         pathEffect = Resources.path_consumer;
@@ -871,11 +880,21 @@ namespace Wired
         public bool ReceiverCoroutineRunning = false;
         public void UpdateAllNetworks()
         {
+            StopAllCoroutines();
+            StartCoroutine(DelayedUpdateNetworks());
+        }
+        private IEnumerator DelayedUpdateNetworks()
+        {
+            yield return new WaitUntil(() => UpdateFinished);
+            _UpdateAllNetworks();
+        }
+        private void _UpdateAllNetworks()
+        {
             UpdateFinished = false;
             var stopwatch = Stopwatch.StartNew();
             var visited = new HashSet<IElectricNode>();
 
-            foreach (var node in Nodes.Values)
+            foreach (var node in _nodes.Values)
             {
                 if(node == null)
                     continue;
@@ -970,7 +989,7 @@ namespace Wired
                 {
                     if (neighbor is SwitchNode sw && !sw.IsOn)
                         continue; // block current flow
-                    if (neighbor is ReceiverNode rr && !rr.IsOn)
+                    if (neighbor is RadioReceiverNode rr && !rr.IsOn)
                         continue; // block current flow
                     if (neighbor is TimerNode)
                     {
@@ -1046,7 +1065,7 @@ namespace Wired
                 {
                     return true;
                 }
-                if (__instance.gameObject.GetComponent<ReceiverNode>() != null)
+                if (__instance.gameObject.GetComponent<RadioReceiverNode>() != null)
                 {
                     if (player.equipment.asset == null || !Instance.Resources.WiredAssets.ContainsKey(player.equipment.asset.GUID) || Instance.Resources.WiredAssets[player.equipment.asset.GUID] != WiredAssetType.RemoteTool)
                         return false;

@@ -18,6 +18,8 @@ namespace Wired
         public EffectAsset node_timer;
         public EffectAsset path_timer;
 
+        public EffectAsset wire_generic;
+
         public ItemBarricadeAsset generator_technical;
 
         public List<Guid> nodeeffects = new List<Guid>();

@@ -7,7 +7,7 @@ namespace Wired.Nodes
     public abstract class Node : MonoBehaviour, IElectricNode
     {
         public ICollection<IElectricNode> Connections { get; set; }
-        public void unInit()
+        public virtual void unInit()
         {
             DebugLogger.Log($"Destroyed node {instanceID}");
             StopAllCoroutines();

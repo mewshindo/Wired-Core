@@ -11,7 +11,7 @@ namespace Wired
 {
     public class RadioManager : MonoBehaviour
     {
-        private static RadioManager Instance;
+        public Dictionary<uint, IElectricNode> Nodes;
         private void Awake()
         {
             DebugLogger.Log("Initialized Radiomanager");
@@ -20,10 +20,10 @@ namespace Wired
         {
             if (!Plugin.Instance.LevelLoaded)
                 return;
-            List<ReceiverNode> receivers = Plugin.Instance.Nodes.Values.OfType<ReceiverNode>().Where(r => r.Frequency == frequency).ToList();
+            List<RadioReceiverNode> receivers = Nodes.Values.OfType<RadioReceiverNode>().Where(r => r.Frequency == frequency).ToList();
 
             ushort touchedreceivers = 0;
-            foreach (ReceiverNode receiver in receivers)
+            foreach (RadioReceiverNode receiver in receivers)
             {
                 if (receiver.IsOn && signal == RadioSignalType.False || !receiver.IsOn && signal == RadioSignalType.True || signal == RadioSignalType.Toggle)
                 {
@@ -32,16 +32,10 @@ namespace Wired
                 }
             }
             if(touchedreceivers > 0)
-            {
-                StopAllCoroutines();
-                StartCoroutine(DelayedUpdateNetworks());
-            }
+                Plugin.Instance.UpdateAllNetworks();
+
+
             DebugLogger.Log($"Transmitted signal {signal} on frequency {frequency}, affected {touchedreceivers} receivers.");
-        }
-        IEnumerator DelayedUpdateNetworks()
-        {
-            yield return new WaitUntil(() => Plugin.Instance.UpdateFinished);
-            Plugin.Instance.UpdateAllNetworks();
         }
     }
     public enum RadioSignalType
