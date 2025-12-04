@@ -11,9 +11,14 @@ namespace Wired.Nodes
         {
             DebugLogger.Log($"Destroyed node {instanceID}");
             StopAllCoroutines();
+            if(transform.GetComponentInChildren<PlayerDetector>() != null)
+            {
+                transform.GetComponentInChildren<PlayerDetector>().OnDestroy();
+            }
+
             Destroy(this);
         }
-        public uint Voltage { get; protected set; }
+        public float Voltage { get; protected set; }
         public uint instanceID { get; set; }
 
         protected virtual void Awake()
@@ -40,8 +45,8 @@ namespace Wired.Nodes
             Plugin.Instance.UpdateAllNetworks();
         }
 
-        public abstract void IncreaseVoltage(uint amount);
-        public abstract void DecreaseVoltage(uint amount);
+        public abstract void IncreaseVoltage(float amount);
+        public abstract void DecreaseVoltage(float amount);
     }
 
 }

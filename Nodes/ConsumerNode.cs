@@ -7,7 +7,7 @@ namespace Wired.Nodes
 {
     public class ConsumerNode : Node
     {
-        public uint Consumption { get; set; }
+        public float Consumption { get; set; }
         private bool isPowered;
 
         private InteractableSpot _spot;
@@ -27,13 +27,13 @@ namespace Wired.Nodes
             _charge = GetComponent<InteractableCharge>();
             _coolConsumer = GetComponent<CoolConsumer>();
         }
-        public override void IncreaseVoltage(uint amount)
+        public override void IncreaseVoltage(float amount)
         {
             Voltage = amount;
             CheckPowerStatus();
         }
 
-        public override void DecreaseVoltage(uint amount)
+        public override void DecreaseVoltage(float amount)
         {
             Voltage = (Voltage < amount) ? 0 : Voltage - amount;
             CheckPowerStatus();

@@ -158,6 +158,7 @@ namespace Wired
                     "WiringTool",
                     "RemoteTool",
                     "Gate",
+                    "Switch",
                     "Timer",
                     "RemoteReceiver",
                     "RemoteTransmitter",
@@ -180,6 +181,9 @@ namespace Wired
                             Resources.WiredAssets.Add(asset.GUID, WiredAssetType.ManualTablet);
                             break;
                         case "Gate":
+                            Resources.WiredAssets.Add(asset.GUID, WiredAssetType.Gate);
+                            break;
+                        case "Switch":
                             Resources.WiredAssets.Add(asset.GUID, WiredAssetType.Gate);
                             break;
                         case "Timer":
@@ -582,6 +586,8 @@ namespace Wired
             {
                 return;
             }
+            AssetParser parser = new AssetParser(drop.asset.getFilePath());
+
             if (drop.model.GetComponent<InteractableGenerator>() != null)
             {
                 if (drop.model.GetComponent<SupplierNode>() == null)
@@ -602,7 +608,7 @@ namespace Wired
                         drop.model.gameObject.AddComponent<TimerNode>();
                     var node = drop.model.GetComponent<TimerNode>();
                     _nodes.Add(node.instanceID, node);
-                    AssetParser parser = new AssetParser(drop.asset.getFilePath());
+
                     if (parser.TryGetFloat("Timer_Delay_Seconds", out var val))
                     {
                         node.DelaySeconds = val;
@@ -614,11 +620,26 @@ namespace Wired
                 {
                     if (drop.model.GetComponent<GateNode>() == null)
                         drop.model.gameObject.AddComponent<GateNode>();
+
+
                     var node = drop.model.GetComponent<GateNode>();
                     _nodes.Add(node.instanceID, node);
 
-                    drop.model.gameObject.AddComponent<PlayerDetector>();
-                    Console.WriteLine($"Added a playerdetector to {drop.instanceID}");
+                    if (parser.HasEntry("PlayerDetector"))
+                    {
+                        if (drop.model.Find("Detector") != null)
+                        {
+                            DebugLogger.Log($"Detector found on {drop.asset.name}");
+                            drop.model.Find("Detector").gameObject.AddComponent<PlayerDetector>();
+                        }
+                        else
+                        {
+                            DebugLogger.Log($"Detector NOT found on {drop.asset.name}, creating");
+                            new GameObject("Detector", typeof(PlayerDetector)).transform.SetParent(drop.model);
+                        }
+                        DebugLogger.Log($"Added a playerdetector to {drop.instanceID} {drop.asset.name}");
+                    }
+
 
                     return;
                 }
@@ -653,6 +674,9 @@ namespace Wired
 
                 _nodes.Add(node.instanceID, node);
                 node.SetPowered(false);
+
+                if(parser.TryGetFloat("Power_Consumption", out float consumption))
+                    node.Consumption = consumption;
 
                 if (drop.asset.id == 459) // Spotlight
                     node.Consumption = 250;
@@ -877,7 +901,6 @@ namespace Wired
             }
         }
         public bool UpdateFinished = true;
-        public bool ReceiverCoroutineRunning = false;
         public void UpdateAllNetworks()
         {
             StopAllCoroutines();
@@ -964,7 +987,6 @@ namespace Wired
             stopwatch.Stop();
             DebugLogger.Log($"[PowerShenanigans] Updated networks in {stopwatch.ElapsedMilliseconds} ms");
             UpdateFinished = true;
-            ReceiverCoroutineRunning = false;
         }
 
         private List<IElectricNode> GetConnectedNetwork(IElectricNode root, HashSet<IElectricNode> visited)
@@ -987,7 +1009,7 @@ namespace Wired
 
                 foreach (var neighbor in node.Connections)
                 {
-                    if (neighbor is GateNode sw && !sw.IsOn)
+                    if (neighbor is GateNode gate && !gate.IsOpen || neighbor is PlayerDetector)
                         continue; // block current flow
                     if (neighbor is RadioReceiverNode rr && !rr.IsOn)
                         continue; // block current flow
@@ -1073,6 +1095,10 @@ namespace Wired
                 }
                 if (__instance.gameObject.GetComponent<GateNode>() != null)
                 {
+                    if (__instance.gameObject.GetComponentInChildren<PlayerDetector>(true) != null)
+                        return false;
+
+
                     __instance.gameObject.GetComponent<GateNode>()?.Toggle(desiredPowered);
                     return true;
                 }

@@ -69,8 +69,8 @@ namespace Wired.Nodes
             }
             IsOn = state == RadioSignalType.True;
         }
-        public override void IncreaseVoltage(uint amount) { }
+        public override void IncreaseVoltage(float amount) { }
 
-        public override void DecreaseVoltage(uint amount) { }
+        public override void DecreaseVoltage(float amount) { }
     }
 }

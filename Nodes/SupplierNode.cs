@@ -13,7 +13,7 @@ namespace Wired.Nodes
             base.Awake();
             _generator = GetComponent<InteractableGenerator>();
         }
-        public override void IncreaseVoltage(uint amount) { }
-        public override void DecreaseVoltage(uint amount) { }
+        public override void IncreaseVoltage(float amount) { }
+        public override void DecreaseVoltage(float amount) { }
     }
 }

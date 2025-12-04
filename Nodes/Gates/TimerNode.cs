@@ -24,7 +24,7 @@ namespace Wired.Nodes
             _displaySign = GetComponent<InteractableSign>();
         }
 
-        public override void IncreaseVoltage(uint amount)
+        public override void IncreaseVoltage(float amount)
         {
             if (Activated || IsCountingDown)
                 return;
@@ -34,7 +34,7 @@ namespace Wired.Nodes
         }
 
 
-        public override void DecreaseVoltage(uint amount)
+        public override void DecreaseVoltage(float amount)
         {
             if (Voltage < amount)
                 Voltage = 0;

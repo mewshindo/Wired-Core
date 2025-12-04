@@ -5,13 +5,13 @@ namespace Wired.Nodes
 
     public interface IElectricNode
     {
-        uint Voltage { get; }
+        float Voltage { get; }
         uint instanceID { get; set; }
         ICollection<IElectricNode> Connections { get; set; }
         void AddConnection(IElectricNode node);
         void RemoveConnection(IElectricNode node);
 
-        void IncreaseVoltage(uint amount);
-        void DecreaseVoltage(uint amount);
+        void IncreaseVoltage(float amount);
+        void DecreaseVoltage(float amount);
     }
 }

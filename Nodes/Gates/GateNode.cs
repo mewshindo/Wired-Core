@@ -3,23 +3,23 @@ namespace Wired.Nodes
 {
     public class GateNode : Node
     {
-        public bool IsOn { get; private set; } = false;
+        public bool IsOpen { get; private set; } = false;
         public bool SwitchableByPlayer { get; set; } = false;
 
         public void Toggle(bool state)
         {
-            IsOn = state;
+            IsOpen = state;
             Plugin.Instance.UpdateAllNetworks();
         }
 
-        public override void IncreaseVoltage(uint amount)
+        public override void IncreaseVoltage(float amount)
         {
-            if (!IsOn) return;
+            if (!IsOpen) return;
         }
 
-        public override void DecreaseVoltage(uint amount)
+        public override void DecreaseVoltage(float amount)
         {
-            if (!IsOn) return;
+            if (!IsOpen) return;
         }
     }
 

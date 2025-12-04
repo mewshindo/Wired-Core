@@ -115,7 +115,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Nodes\Gates\PlayerDetector.cs" />
+    <Compile Include="Consumers\VehicleBatteryCharger.cs" />
+    <Compile Include="Nodes\Gates\GateNode.cs" />
+    <Compile Include="Misc\PlayerDetector.cs" />
     <Compile Include="Utilities\AssetParser.cs" />
     <Compile Include="Utilities\BarricadeFinder.cs" />
     <Compile Include="Config.cs" />
@@ -132,7 +134,6 @@
     <Compile Include="Consumers\RadioTransmitter.cs" />
     <Compile Include="Nodes\Gates\RadioReceiverNode.cs" />
     <Compile Include="Nodes\SupplierNode.cs" />
-    <Compile Include="Nodes\Gates\SwitchNode.cs" />
     <Compile Include="Nodes\Gates\TimerNode.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -140,9 +141,7 @@
     <Compile Include="RadioManager.cs" />
     <Compile Include="Resources.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Misc\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetPath)" "D:\SteamCMD\steamapps\common\U3DS\Servers\Default\Rocket\Plugins"</PostBuildEvent>
