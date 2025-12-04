@@ -68,6 +68,7 @@ namespace Wired
                         c.unInit();
                         if (_nodes.ContainsKey(c.instanceID))
                             _nodes.Remove(c.instanceID);
+                        UpdateWiresDisplay();
                     }
                 }
                 else if (BarricadeManager.FindBarricadeByRootTransform(barricadeTransform).GetServersideData().barricade.isDead)
@@ -77,6 +78,7 @@ namespace Wired
                         node.unInit();
                         if (_nodes.ContainsKey(node.instanceID))
                             _nodes.Remove(node.instanceID);
+                        UpdateWiresDisplay();
                     }
                 }
             };
@@ -197,7 +199,6 @@ namespace Wired
                             break;
                     }
                 }
-
             }
 
             foreach (BarricadeRegion reg in BarricadeManager.regions)
@@ -297,6 +298,12 @@ namespace Wired
             var node1 = _selectedNode[steamid];
             var node2 = model;
 
+            if(Math.Round(Vector3.Distance(node1.position, node2.position)) > 25)
+            {
+                player.Player.ServerShowHint($"The nodes are too far apart! ({Math.Round(Vector3.Distance(node1.position, node2.position))} > 25)", 3f);
+                return;
+            }
+
             if (node1 == node2)
             {
                 _selectedNode.Remove(steamid);
@@ -321,6 +328,7 @@ namespace Wired
                 electricNode2.Connections.Remove(electricNode1);
 
                 UpdateNodesDisplay(steamid);
+                UpdateWiresDisplay();
 
                 UpdateAllNetworks();
                 ClearSelection(player);
@@ -338,6 +346,8 @@ namespace Wired
 
             UpdateAllNetworks();
             UpdateNodesDisplay(steamid);
+            UpdateWiresDisplay();
+
             _selectedNode.Remove(steamid);
         }
         private void onEquipRequested(PlayerEquipment equipment, ItemJar jar, ItemAsset asset, ref bool shouldAllow)
@@ -502,7 +512,6 @@ namespace Wired
                     {
                         Console.WriteLine("1");
                         var steamid = instigatingPlayer.channel.owner.playerID.steamID;
-                        var arg = (byte)((instigatingPlayer != null && instigatingPlayer.channel != null && instigatingPlayer.channel.owner != null) ? ((byte)instigatingPlayer.channel.owner.channel) : 0);
 
                         byte page = 0;
                         if (_manualPage.ContainsKey(steamid))
@@ -520,7 +529,6 @@ namespace Wired
                     {
                         Console.WriteLine("2");
                         var steamid = instigatingPlayer.channel.owner.playerID.steamID;
-                        var arg = (byte)((instigatingPlayer != null && instigatingPlayer.channel != null && instigatingPlayer.channel.owner != null) ? ((byte)instigatingPlayer.channel.owner.channel) : 0);
 
                         byte page = 0;
                         if (_manualPage.ContainsKey(steamid))
@@ -770,6 +778,8 @@ namespace Wired
             node.Connections.Clear();
             _nodes.Remove(id);
             UpdateNodesDisplay(instigatorClient.playerID.steamID);
+            UpdateWiresDisplay();
+
             UpdateAllNetworks();
             UpdateFarmsAffected();
 
@@ -785,6 +795,56 @@ namespace Wired
             foreach (Guid guid in Resources.nodeeffects)
                 EffectManager.ClearEffectByGuid(guid, Provider.findTransportConnection(steamid));
             DisplayNodes(steamid);
+        }
+        private void UpdateWiresDisplay()
+        {
+            EffectManager.ClearEffectByGuid_AllPlayers(Resources.wire_generic.GUID);
+
+            HashSet<(IElectricNode, IElectricNode)> drawnConnections = new HashSet<(IElectricNode, IElectricNode)>();
+
+            var bfinder = new BarricadeFinder();
+            foreach (BarricadeDrop drop in bfinder.GetBarricadesOfType<Nodes.Node>())
+            {
+                Transform t = drop.model;
+                if (t == null)
+                    continue;
+                if (!t.TryGetComponent<IElectricNode>(out IElectricNode node))
+                    continue;
+
+                foreach (IElectricNode connected in node.Connections)
+                {
+                    if (connected == null)
+                        continue;
+
+                    var pair = (node, connected);
+                    var reversed = (connected, node);
+                    if (drawnConnections.Contains(pair) || drawnConnections.Contains(reversed))
+                        continue;
+
+                    drawnConnections.Add(pair);
+
+                    Vector3 start = ((MonoBehaviour)node).transform.position;
+                    Vector3 end = ((MonoBehaviour)connected).transform.position;
+
+                    EffectAsset pathEffect = Resources.wire_generic;
+
+                    float distance = Vector3.Distance(start, end);
+
+                    Vector3 direction = (start - end).normalized;
+
+                    TriggerEffectParameters effect = new TriggerEffectParameters
+                    {
+                        asset = pathEffect,
+                        position = start,
+                        relevantDistance = 4096f,
+                        shouldReplicate = true,
+                        reliable = true,
+                        scale = new Vector3(1f, 1f, distance)
+                    };
+                    effect.SetDirection(direction);
+                    EffectManager.triggerEffect(effect);
+                }
+            }
         }
         private bool Link(IElectricNode a, IElectricNode b, bool updateNetworks = true)
         {
