@@ -3,9 +3,15 @@ using UnityEngine;
 
 namespace Wired
 {
-    public static class Raycast
+    public class Raycast
     {
-        public static BarricadeDrop GetBarricade(Player player, out string collider)
+        private Player player;
+
+        public Raycast(Player player)
+        {
+            this.player = player;
+        }
+        public BarricadeDrop GetBarricade(out string collider)
         {
             Transform aim = player.look.aim;
             collider = "";
@@ -28,6 +34,15 @@ namespace Wired
             BarricadeDrop bardrop = BarricadeManager.FindBarricadeByRootTransform(raycastInfo.transform);
             collider = raycastInfo.collider.name;
             return bardrop;
+        }
+        public Vector3 GetPoint(float range = float.PositiveInfinity)
+        {
+            Transform aim = player.look.aim;
+            if (!Physics.Raycast(aim.position, aim.forward, out var hitInfo, range, RayMasks.BLOCK_COLLISION))
+            {
+                return Vector3.zero;
+            }
+            return hitInfo.point;
         }
     }
 }

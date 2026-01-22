@@ -115,15 +115,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\SwitchNode.cs" />
+    <Compile Include="Models\NodeConnection.cs" />
+    <Compile Include="Models\ConsumerNode.cs" />
+    <Compile Include="Models\IElectricNode.cs" />
+    <Compile Include="Models\SupplierNode.cs" />
+    <Compile Include="Resources.cs" />
+    <Compile Include="Services\WiringToolService.cs" />
+    <Compile Include="Services\NodeInitializationService.cs" />
+    <Compile Include="Services\NodeConnectionsService.cs" />
+    <Compile Include="Services\PlayerViewService.cs" />
+    <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="Utilities\AssetParser.cs" />
     <Compile Include="Utilities\BarricadeFinder.cs" />
     <Compile Include="Config.cs" />
-    <Compile Include="Utilities\CoolEvents.cs" />
+    <Compile Include="Services\PlayerEventsService.cs" />
     <Compile Include="Utilities\MetadataEditor.cs" />
     <Compile Include="Utilities\NodeConnectionsSaver.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Raycast.cs" />
+    <Compile Include="Wrappers\ConsumerInteractable.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
