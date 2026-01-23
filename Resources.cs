@@ -11,21 +11,26 @@ namespace Wired
     {
         public EffectAsset node_consumer;
         public EffectAsset path_consumer;
+        public EffectAsset preview_consumer;
 
         public EffectAsset node_power;
         public EffectAsset path_power;
+        public EffectAsset preview_power;
 
         public EffectAsset node_gate;
         public EffectAsset path_gate;
+        public EffectAsset preview_gate;
 
         public EffectAsset node_timer;
         public EffectAsset path_timer;
+        public EffectAsset preview_timer;
 
         public EffectAsset wire_generic;
 
         public ItemBarricadeAsset generator_technical;
 
         public List<Guid> nodeeffects = new List<Guid>();
+        public List<Guid> previeweffects = new List<Guid>();
 
         public Dictionary<Guid, WiredAsset> WiredAssets = new Dictionary<Guid, WiredAsset>();
         public Resources()

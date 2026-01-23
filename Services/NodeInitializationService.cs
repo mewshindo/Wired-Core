@@ -52,7 +52,7 @@ namespace Wired.Services
                     break;
             }
 
-            if(barricade.model.GetComponent<InteractableGenerator>() != null)
+            if(barricade.model.TryGetComponent(out InteractableGenerator _))
             {
                 var node = barricade.model.gameObject.AddComponent<SupplierNode>();
                 node.SetPowered(false);

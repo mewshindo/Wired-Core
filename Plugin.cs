@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using Rocket.Core.Plugins;
@@ -28,12 +29,67 @@ namespace Wired
             {
                 Console.WriteLine("Patched method: " + method.DeclaringType.FullName + "." + method.Name);
             }
+            Level.onLevelLoaded += OnLevelLoaded;
         }
         protected override void Unload()
         {
             Harmony harmony = new Harmony("com.mew.powerShenanigans");
             harmony.UnpatchAll("com.mew.powerShenanigans");
             Instance = null;
+        }
+
+        private void OnLevelLoaded(int lvl)
+        {
+            List<ItemAsset> items = new List<ItemAsset>();
+            Assets.find(items);
+
+            foreach (ItemAsset asset in items)
+            {
+                AssetParser parser = new AssetParser(asset.getFilePath());
+                string[] stringstoparse = new string[] {
+                    "WiringTool",
+                    "RemoteTool",
+                    "Gate",
+                    "Switch",
+                    "Timer",
+                    "RemoteReceiver",
+                    "RemoteTransmitter",
+                    "ManualTablet"
+                };
+                if (parser.HasAnyEntry(stringstoparse, out var foundentry))
+                {
+                    Console.WriteLine($"Found wired asset: {asset.name} ({asset.GUID}) as {foundentry}");
+                    switch (foundentry)
+                    {
+                        default:
+                            break;
+                        case "WiringTool":
+                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.WiringTool);
+                            break;
+                        case "RemoteTool":
+                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteTool);
+                            break;
+                        case "ManualTablet":
+                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.ManualTablet);
+                            break;
+                        case "Gate":
+                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.Gate);
+                            break;
+                        case "Switch":
+                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.Gate);
+                            break;
+                        case "Timer":
+                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.Timer);
+                            break;
+                        case "RemoteReceiver":
+                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteReceiver);
+                            break;
+                        case "RemoteTransmitter":
+                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteTransmitter);
+                            break;
+                    }
+                }
+            }
         }
 
 
@@ -48,10 +104,10 @@ namespace Wired
                 {
                     return true;
                 }
-                if (__instance.gameObject.GetComponent<SwitchNode>() != null)
+                if (__instance.gameObject.TryGetComponent(out SwitchNode sw))
                 {
-                    __instance.gameObject.GetComponent<SwitchNode>()?.Switch(desiredPowered);
-                    OnSwitchToggled?.Invoke(__instance.gameObject.GetComponent<SwitchNode>(), desiredPowered);
+                    sw.Switch(desiredPowered);
+                    OnSwitchToggled?.Invoke(sw, desiredPowered);
                     return true;
                 }
                 return false;

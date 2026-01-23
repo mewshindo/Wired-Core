@@ -85,6 +85,7 @@ namespace Wired.Services
             }
 
             OnNodeLinkRequested?.Invoke(player, electricnode1, electricnode2);
+            OnNodeSelectionClearRequested?.Invoke(player);
             ClearSelection(player);
         }
 

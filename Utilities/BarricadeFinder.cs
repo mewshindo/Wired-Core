@@ -50,7 +50,7 @@ namespace Wired
             {
                 foreach(BarricadeDrop drop in reg.drops)
                 {
-                    if (drop.model.GetComponent<T>() != null)
+                    if (drop.model.TryGetComponent(out T _))
                         result.Add(drop);
                 }
             }
