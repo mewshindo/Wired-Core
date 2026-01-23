@@ -64,28 +64,28 @@ namespace Wired
                         default:
                             break;
                         case "WiringTool":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.WiringTool);
+                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.WiringTool));
                             break;
                         case "RemoteTool":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteTool);
+                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteTool));
                             break;
                         case "ManualTablet":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.ManualTablet);
+                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.ManualTablet));
                             break;
                         case "Gate":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.Gate);
+                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Switch));
                             break;
                         case "Switch":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.Gate);
+                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Switch));
                             break;
                         case "Timer":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.Timer);
+                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Timer));
                             break;
                         case "RemoteReceiver":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteReceiver);
+                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteReceiver));
                             break;
                         case "RemoteTransmitter":
-                            _resources.WiredAssets.Add(asset.GUID, WiredAssetType.RemoteTransmitter);
+                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteTransmitter));
                             break;
                     }
                 }
@@ -114,20 +114,6 @@ namespace Wired
             }
         }
 
-        [HarmonyPatch(typeof(InteractableFire), "ReceiveToggleRequest")]
-        private static class Patch_InteractableFire_ReceiveToggleRequest
-        {
-            private static bool Prefix(InteractableFire __instance, ServerInvocationContext context, bool desiredLit)
-            {
-                Console.WriteLine(string.Format("[PowerShenanigans] ReceiveToggleRequest from player {0} desiredLit={1}, __instance.name: {2}", context.GetPlayer()?.ToString() ?? "null", desiredLit, __instance.name));
-                if (__instance.name == "1272")
-                {
-                    //__instance.gameObject.GetComponent<GateNode>()?.Toggle(desiredLit);
-
-                }
-                return true;
-            }
-        }
         [HarmonyPatch(typeof(InteractableFarm), "updatePlanted")]
         private static class Patch_InteractableFarm_updatePlanted
         {

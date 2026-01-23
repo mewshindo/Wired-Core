@@ -18,19 +18,30 @@ namespace Wired.Services
         public NodeInitializationService(Resources resources)
         {
             _resources = resources;
-
             BarricadeManager.onBarricadeSpawned += OnBarricadeSpawned;
+
+            BarricadeFinder bf = new BarricadeFinder();
+            foreach (BarricadeRegion reg in BarricadeManager.regions)
+            {
+                for (int i = 0; i < reg.drops.Count; i++)
+                {
+                    var drop = reg.drops[i];
+                    if (drop == null)
+                        continue;
+                    OnBarricadeSpawned(reg, drop);
+                }
+            }
         }
         private void OnBarricadeSpawned(BarricadeRegion region, BarricadeDrop drop)
         {
             if(drop.IsChildOfVehicle)
                 return;
 
-            CreateAndInitializeNode(drop);
+            TryInializeBarricade(drop);
         }
 
 
-        private void CreateAndInitializeNode(BarricadeDrop barricade)
+        private void TryInializeBarricade(BarricadeDrop barricade)
         {
             AssetParser parser = new AssetParser(barricade.asset.getFilePath());
 

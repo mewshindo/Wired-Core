@@ -28,6 +28,7 @@ namespace Wired
                         result.Add(drop);
                     }
                 }
+                return result;
             }
             foreach (var reg in regions)
             {
