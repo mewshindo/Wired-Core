@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
+using Rocket.API.Extensions;
 using Rocket.Core.Plugins;
+using Rocket.Unturned;
 using SDG.Unturned;
 using Wired.Models;
 using Wired.Services;
@@ -13,12 +15,18 @@ namespace Wired
     {
         public static Plugin Instance;
 
-        private Resources _resources;
+        public Resources Resources;
 
         private ServiceContainer _services;
 
         public delegate void SwitchToggled(SwitchNode sw, bool state);
         public static event SwitchToggled OnSwitchToggled;
+        public void SendSwitchToggled(SwitchNode sw, bool state) => OnSwitchToggled?.Invoke(sw, state);
+
+        public delegate void TimerExpired(TimerNode timer);
+        public static event TimerExpired OnTimerExpired;
+        public void SendTimerExpired(TimerNode timer) => OnTimerExpired?.Invoke(timer);
+
         protected override void Load()
         {
             Instance = this;
@@ -29,69 +37,66 @@ namespace Wired
             {
                 Console.WriteLine("Patched method: " + method.DeclaringType.FullName + "." + method.Name);
             }
+
+            U.Events.OnPlayerConnected += OnPlayerConnected;
+            U.Events.OnPlayerDisconnected += OnPlayerDisconnected;
             Level.onLevelLoaded += OnLevelLoaded;
         }
+
         protected override void Unload()
         {
             Harmony harmony = new Harmony("com.mew.powerShenanigans");
             harmony.UnpatchAll("com.mew.powerShenanigans");
+
+            U.Events.OnPlayerConnected -= OnPlayerConnected;
+            U.Events.OnPlayerDisconnected -= OnPlayerDisconnected;
+            Level.onLevelLoaded -= OnLevelLoaded;
+
             Instance = null;
         }
-
         private void OnLevelLoaded(int lvl)
         {
-            List<ItemAsset> items = new List<ItemAsset>();
-            Assets.find(items);
-
-            foreach (ItemAsset asset in items)
+            if (!Provider.getServerWorkshopFileIDs().Contains(3583223837))
             {
-                AssetParser parser = new AssetParser(asset.getFilePath());
-                string[] stringstoparse = new string[] {
-                    "WiringTool",
-                    "RemoteTool",
-                    "Gate",
-                    "Switch",
-                    "Timer",
-                    "RemoteReceiver",
-                    "RemoteTransmitter",
-                    "ManualTablet"
-                };
-                if (parser.HasAnyEntry(stringstoparse, out var foundentry))
-                {
-                    Console.WriteLine($"Found wired asset: {asset.name} ({asset.GUID}) as {foundentry}");
-                    switch (foundentry)
-                    {
-                        default:
-                            break;
-                        case "WiringTool":
-                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.WiringTool));
-                            break;
-                        case "RemoteTool":
-                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteTool));
-                            break;
-                        case "ManualTablet":
-                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.ManualTablet));
-                            break;
-                        case "Gate":
-                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Switch));
-                            break;
-                        case "Switch":
-                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Switch));
-                            break;
-                        case "Timer":
-                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Timer));
-                            break;
-                        case "RemoteReceiver":
-                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteReceiver));
-                            break;
-                        case "RemoteTransmitter":
-                            _resources.WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteTransmitter));
-                            break;
-                    }
-                }
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("##########################################################");
+                Console.WriteLine("##########################################################");
+                Console.WriteLine("");
+                Console.WriteLine("                 WIRED IS NOT INSTALLED");
+                Console.WriteLine("    Add 3583223837 to your WorkshopDownloadConfig.json");
+                Console.WriteLine("");
+                Console.WriteLine("##########################################################");
+                Console.WriteLine("##########################################################");
+                Console.ResetColor();
+
+                Instance.UnloadPlugin();
+                return;
             }
+
+
+            Resources = new Resources();
+            _services = new ServiceContainer(Resources);
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("           _              _ ");
+            Console.WriteLine("          (_)            | |");
+            Console.WriteLine(" __      ___ _ __ ___  __| |");
+            Console.WriteLine(" \\ \\ /\\ / / | '__/ _ \\/ _` |        Wired has loaded succesfully!");
+            Console.WriteLine("  \\ V  V /| | | |  __/ (_| |");
+            Console.WriteLine("   \\_/\\_/ |_|_|  \\___|\\__,_|\n");
+            Console.ResetColor();
         }
 
+
+        private void OnPlayerDisconnected(Rocket.Unturned.Player.UnturnedPlayer player)
+        {
+            player.Player.gameObject.TryRemoveComponent<PlayerEvents>();
+        }
+
+        private void OnPlayerConnected(Rocket.Unturned.Player.UnturnedPlayer player)
+        {
+            player.Player.gameObject.AddComponent<PlayerEvents>();
+        }
 
         [HarmonyPatch(typeof(InteractableSpot), "ReceiveToggleRequest")]
         private static class Patch_InteractableSpot_ReceiveToggleRequest
@@ -99,7 +104,6 @@ namespace Wired
             private static bool Prefix(InteractableSpot __instance, ServerInvocationContext context, bool desiredPowered)
             {
                 Player player = context.GetPlayer();
-                Console.WriteLine(string.Format("[PowerShenanigans] ReceiveToggleRequest from player {0} desiredPowered={1}, __instance.name: {2}", player?.ToString() ?? "null", desiredPowered, __instance.name));
                 if (player == null)
                 {
                     return true;
@@ -107,7 +111,6 @@ namespace Wired
                 if (__instance.gameObject.TryGetComponent(out SwitchNode sw))
                 {
                     sw.Switch(desiredPowered);
-                    OnSwitchToggled?.Invoke(sw, desiredPowered);
                     return true;
                 }
                 return false;

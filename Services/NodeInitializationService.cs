@@ -45,22 +45,41 @@ namespace Wired.Services
         {
             AssetParser parser = new AssetParser(barricade.asset.getFilePath());
 
-            switch (_resources.WiredAssets[barricade.asset.GUID].Type)
+            if (_resources.WiredAssets.ContainsKey(barricade.asset.GUID))
             {
-                case WiredAssetType.Switch:
-                    var node = barricade.model.gameObject.AddComponent<SwitchNode>();
-                    node.SetPowered(false);
-                    OnNodeCreated?.Invoke(barricade, node);
-                    return;
-                case WiredAssetType.Timer:
-                    return;
-                case WiredAssetType.RemoteTransmitter:
-                    return;
-                case WiredAssetType.RemoteReceiver:
-                    return;
+                switch (_resources.WiredAssets[barricade.asset.GUID].Type)
+                {
+                    case WiredAssetType.Switch:
+                        var sw = barricade.model.gameObject.AddComponent<SwitchNode>();
+                        sw.SetPowered(false);
+                        OnNodeCreated?.Invoke(barricade, sw);
+                        return;
 
-                default:
-                    break;
+                    case WiredAssetType.Timer:
+                        var timer = barricade.model.gameObject.AddComponent<TimerNode>();
+                        timer.SetPowered(false);
+                        if (parser.TryGetFloat("Timer_Delay_Seconds", out float delay))
+                        {
+                            timer.DelaySeconds = (ushort)Math.Round(delay);
+                        }
+                        else
+                        {
+                            timer.DelaySeconds = 5;
+                        }
+                        timer.StopIfRunning();
+                        OnNodeCreated?.Invoke(barricade, timer);
+                        return;
+
+                    case WiredAssetType.RemoteTransmitter:
+                        return;
+
+                    case WiredAssetType.RemoteReceiver:
+                        return;
+
+
+                    default:
+                        break;
+                }
             }
 
             if(barricade.model.TryGetComponent(out InteractableGenerator _))

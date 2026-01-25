@@ -6,20 +6,18 @@ namespace Wired
 {
     public class BarricadeFinder
     {
-        private readonly float _radius;
         private readonly Vector3 _position;
 
-        public BarricadeFinder(Vector3 position = new Vector3(), float radius = 0f)
+        public BarricadeFinder(Vector3 position = new Vector3())
         {
-            _radius = radius;
             _position = position;
         }
 
-        public List<BarricadeDrop> GetBarricadesInRadius()
+        public List<BarricadeDrop> GetBarricadesInRadius(float radius = 0)
         {
             List<BarricadeDrop> result = new List<BarricadeDrop>();
             BarricadeRegion[,] regions = BarricadeManager.regions;
-            if (_radius == 0)
+            if (radius == 0)
             {
                 foreach (var region in regions)
                 {
@@ -35,7 +33,7 @@ namespace Wired
                 foreach (var drop in reg.drops)
                 {
                     float dist = Vector3.Distance(_position, drop.model.position);
-                    if (dist < _radius)
+                    if (dist < radius)
                     {
                         result.Add(drop);
                     }

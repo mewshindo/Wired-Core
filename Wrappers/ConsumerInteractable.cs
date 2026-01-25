@@ -1,4 +1,5 @@
-﻿using SDG.Unturned;
+﻿using Rocket.Unturned.Player;
+using SDG.Unturned;
 using Steamworks;
 using System;
 using System.Collections;
@@ -17,28 +18,13 @@ namespace Wired.Wrappers
         private InteractableOxygenator _oxygenator;
         private InteractableSafezone _safezone;
         private InteractableCharge _charge;
-        public ConsumerInteractable(Interactable interactable)
+        public ConsumerInteractable(Transform barricade)
         {
-            switch (interactable.GetType().ToString())
-            {
-                default:
-                    throw new ArgumentException("Unsupported interactable type");
-                case "InteractableSpot":
-                    _spot = (InteractableSpot)interactable;
-                    break;
-                case "InteractableOven":
-                    _oven = (InteractableOven)interactable;
-                    break;
-                case "InteractableOxygenator":
-                    _oxygenator = (InteractableOxygenator)interactable;
-                    break;
-                case "InteractableSafezone":
-                    _safezone = (InteractableSafezone)interactable;
-                    break;
-                case "InteractableCharge":
-                    _charge = (InteractableCharge)interactable;
-                    break;
-            }
+            _spot = barricade.GetComponent<InteractableSpot>();
+            _oven = barricade.GetComponent<InteractableOven>();
+            _oxygenator = barricade.GetComponent<InteractableOxygenator>();
+            _safezone = barricade.GetComponent<InteractableSafezone>();
+            _charge = barricade.GetComponent<InteractableCharge>();
         }
 
         public void SetPowered(bool powered)
@@ -53,7 +39,7 @@ namespace Wired.Wrappers
                     Transform gen = BarricadeManager.dropNonPlantedBarricade(bar, _spot.transform.position, _spot.transform.rotation, 0, 0);
                     if (gen != null)
                     {
-                        BarricadeManager.sendFuel(gen, 512);
+                        BarricadeManager.sendFuel(gen, 2048);
                         BarricadeManager.ServerSetGeneratorPowered(gen.GetComponent<InteractableGenerator>(), true);
                     }
                 }
@@ -64,6 +50,8 @@ namespace Wired.Wrappers
                 BarricadeManager.ServerSetOxygenatorPowered(_oxygenator, powered);
             if (_safezone != null)
                 BarricadeManager.ServerSetSafezonePowered(_safezone, powered);
+            if (_charge != null)
+                _charge.Detonate(UnturnedPlayer.FromCSteamID(new CSteamID(_charge.owner)).Player);
         }
     }
 }

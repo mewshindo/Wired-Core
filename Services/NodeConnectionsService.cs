@@ -13,27 +13,50 @@ namespace Wired.Services
 {
     public class NodeConnectionsService
     {
-        private readonly List<NodeConnection> _connections;
-        private readonly Resources _resources;
+        private readonly Dictionary<IElectricNode, ElectricNetwork> _nodeToNetwork;
+        public HashSet<ElectricNetwork> Networks { get; private set; }
+
 
         public delegate void NodeConnectionEventHandler(UnturnedPlayer player, NodeConnection connection);
         public static event NodeConnectionEventHandler OnNodeConnected;
         public static event NodeConnectionEventHandler OnNodeDisconnected;
 
-        public NodeConnectionsService(Resources resources)
+        public NodeConnectionsService() 
         {
-            _connections = new List<NodeConnection>();
-            _resources = resources;
+            _nodeToNetwork = new Dictionary<IElectricNode, ElectricNetwork>();
+            Networks = new HashSet<ElectricNetwork>();
 
             WiringToolService.OnNodeLinkRequested += OnNodeLinkRequested;
+            Plugin.OnSwitchToggled += OnSwitchToggled;
+            Plugin.OnTimerExpired += OnTimerExpired;
+        }
+
+        private void OnTimerExpired(TimerNode timer)
+        {
+            if(_nodeToNetwork.TryGetValue(timer, out ElectricNetwork net))
+            {
+                net.RecalculateFlow();
+            }
+        }
+
+        private void OnSwitchToggled(SwitchNode sw, bool state)
+        {
+            if (_nodeToNetwork.TryGetValue(sw, out ElectricNetwork net))
+            {
+                net.RecalculateFlow();
+            }
         }
 
         public List<NodeConnection> GetAllConnections()
         {
-            return _connections;
+            return Networks.SelectMany(n => n.Connections).ToList();
+        }
+        public Dictionary<uint, IElectricNode> GetAllNodes()
+        {
+            return _nodeToNetwork.ToDictionary(kvp => kvp.Key.InstanceID, kvp => kvp.Key);
         }
 
-        private void OnNodeLinkRequested(UnturnedPlayer player, IElectricNode node1, IElectricNode node2)
+        private void OnNodeLinkRequested(UnturnedPlayer player, IElectricNode node1, IElectricNode node2, List<Vector3> wirepath)
         {
             var existingConnection = GetConnection(node1, node2);
 
@@ -43,138 +66,179 @@ namespace Wired.Services
             }
             else
             {
-                ConnectNodes(player, node1, node2);
+                ConnectNodes(player, node1, node2, wirepath);
             }
         }
 
-        private void ConnectNodes(UnturnedPlayer player, IElectricNode node1, IElectricNode node2)
+        public void LoadConnection(IElectricNode node1, IElectricNode node2, List<Vector3> wirePath)
         {
-            NodeConnection connection = new NodeConnection(new List<Vector3>(), node1, node2);
+            ConnectNodes(null, node1, node2, wirePath);
+        }
+        private void ConnectNodes(UnturnedPlayer player, IElectricNode node1, IElectricNode node2, List<Vector3> wirePath)
+        {
+            NodeConnection connection = new NodeConnection(wirePath ?? new List<Vector3>(), node1, node2);
 
-            _connections.Add(connection);
+            _nodeToNetwork.TryGetValue(node1, out ElectricNetwork net1);
+            _nodeToNetwork.TryGetValue(node2, out ElectricNetwork net2);
 
-            OnNodeConnected?.Invoke(player, connection);
-
-            RecalculatePower();
+            if (net1 == null && net2 == null)
+            {
+                CreateNewNetwork(connection);
+            }
+            else if (net1 != null && net2 == null)
+            {
+                AddToNetwork(net1, node2, connection);
+            }
+            else if (net1 == null && net2 != null)
+            {
+                AddToNetwork(net2, node1, connection);
+            }
+            else if (net1 == net2)
+            {
+                net1.AddConnection(connection);
+                net1.RecalculateFlow();
+            }
+            else
+            {
+                MergeNetworks(net1, net2, connection);
+            }
+            if(player != null)
+            {
+                OnNodeConnected?.Invoke(player, connection);
+            }
         }
 
         private void DisconnectNodes(UnturnedPlayer player, NodeConnection connection)
         {
-            if (_connections.Contains(connection))
+            if (_nodeToNetwork.TryGetValue(connection.Node1, out ElectricNetwork network))
             {
-                _connections.Remove(connection);
+                if (network.Connections.Contains(connection))
+                {
+                    network.Connections.Remove(connection);
 
-                OnNodeDisconnected?.Invoke(player, connection);
+                    RebuildNetworkTopology(network);
 
-                RecalculatePower();
+                    OnNodeDisconnected?.Invoke(player, connection);
+                }
             }
         }
 
         public NodeConnection GetConnection(IElectricNode node1, IElectricNode node2)
         {
-            return _connections.FirstOrDefault(nc =>
-                (nc.Node1 == node1 && nc.Node2 == node2) ||
-                (nc.Node1 == node2 && nc.Node2 == node1));
+            if (_nodeToNetwork.TryGetValue(node1, out ElectricNetwork net1))
+            {
+                return net1.Connections.FirstOrDefault(nc =>
+                    (nc.Node1 == node1 && nc.Node2 == node2) ||
+                    (nc.Node1 == node2 && nc.Node2 == node1));
+            }
+            return null; // they must be in the same network if they're connected
         }
 
-        public void RecalculatePower()
+        private void CreateNewNetwork(NodeConnection initialConnection)
         {
-            var graph = BuildGraph();
-            var allNodes = graph.Keys.ToList();
+            ElectricNetwork net = new ElectricNetwork();
+            Networks.Add(net);
 
-            var desiredStates = new Dictionary<IElectricNode, bool>();
-            foreach (var node in allNodes)
+            RegisterNode(net, initialConnection.Node1);
+            RegisterNode(net, initialConnection.Node2);
+            net.AddConnection(initialConnection);
+
+            net.RecalculateFlow();
+        }
+
+        private void AddToNetwork(ElectricNetwork net, IElectricNode newNode, NodeConnection connection)
+        {
+            RegisterNode(net, newNode);
+            net.AddConnection(connection);
+            net.RecalculateFlow();
+        }
+
+        private void MergeNetworks(ElectricNetwork to, ElectricNetwork from, NodeConnection con)
+        {
+            foreach (var node in from.Nodes)
             {
-                desiredStates[node] = false;
+                RegisterNode(to, node);
             }
 
-            var visited = new HashSet<IElectricNode>();
+            foreach (var conn in from.Connections)
+            {
+                to.AddConnection(conn);
+            }
+
+            to.AddConnection(con);
+
+            Networks.Remove(from);
+
+            to.RecalculateFlow();
+        }
+
+        /// <summary>
+        /// this gets called when a node gets removed from a network
+        /// </summary>
+        private void RebuildNetworkTopology(ElectricNetwork oldNetwork)
+        {
+            var allConnections = new List<NodeConnection>(oldNetwork.Connections);
+            var allNodes = new List<IElectricNode>(oldNetwork.Nodes);
+
+            Networks.Remove(oldNetwork);
+            foreach (var node in allNodes) _nodeToNetwork.Remove(node);
+
+            HashSet<IElectricNode> visited = new HashSet<IElectricNode>();
 
             foreach (var node in allNodes)
             {
                 if (visited.Contains(node)) continue;
 
-                ProcessIsland(node, graph, visited, desiredStates);
-            }
+                bool isOrphan = !allConnections.Any(c => c.Node1 == node || c.Node2 == node);
 
-            foreach (var kvp in desiredStates)
-            {
-                IElectricNode node = kvp.Key;
-                bool shouldBePowered = kvp.Value;
-
-                if (node.IsPowered != shouldBePowered)
+                if (isOrphan)
                 {
-                    node.SetPowered(shouldBePowered);
-                }
-            }
-        }
-
-        private void ProcessIsland(
-            IElectricNode startNode,
-            Dictionary<IElectricNode, List<IElectricNode>> graph,
-            HashSet<IElectricNode> visited,
-            Dictionary<IElectricNode, bool> desiredStates)
-        {
-            var islandNodes = new List<IElectricNode>();
-            var suppliers = new List<SupplierNode>();
-            var consumers = new List<ConsumerNode>();
-
-            var queue = new Queue<IElectricNode>();
-            queue.Enqueue(startNode);
-            visited.Add(startNode);
-            islandNodes.Add(startNode);
-
-            while (queue.Count > 0)
-            {
-                var current = queue.Dequeue();
-
-                if (current is SupplierNode sup) suppliers.Add(sup);
-                if (current is ConsumerNode con) consumers.Add(con);
-
-                if (!current.AllowPowerThrough)
+                    if (node.IsPowered) node.SetPowered(false);
                     continue;
+                }
 
-                if (graph.TryGetValue(current, out var neighbors))
+                ElectricNetwork newNet = new ElectricNetwork();
+                Networks.Add(newNet);
+
+                Queue<IElectricNode> q = new Queue<IElectricNode>();
+                q.Enqueue(node);
+                visited.Add(node);
+                RegisterNode(newNet, node);
+
+                while (q.Count > 0)
                 {
-                    foreach (var neighbor in neighbors)
+                    var cur = q.Dequeue();
+                    for (int i = allConnections.Count - 1; i >= 0; i--)
                     {
-                        if (!visited.Contains(neighbor))
+                        var conn = allConnections[i];
+                        IElectricNode neighbor = null;
+
+                        if (conn.Node1 == cur) neighbor = conn.Node2;
+                        else if (conn.Node2 == cur) neighbor = conn.Node1;
+
+                        if (neighbor != null)
                         {
-                            visited.Add(neighbor);
-                            islandNodes.Add(neighbor);
-                            queue.Enqueue(neighbor);
+                            newNet.AddConnection(conn);
+                            allConnections.RemoveAt(i);
+
+                            if (!visited.Contains(neighbor))
+                            {
+                                visited.Add(neighbor);
+                                RegisterNode(newNet, neighbor);
+                                q.Enqueue(neighbor);
+                            }
                         }
                     }
                 }
-            }
 
-            float totalSupply = suppliers.Sum(s => s.Supply);
-            float totalConsumption = consumers.Sum(c => c.Consumption);
-
-            bool hasPower = (totalSupply >= totalConsumption) && (totalSupply > 0);
-
-            if (hasPower)
-            {
-                foreach (var node in islandNodes)
-                {
-                    desiredStates[node] = true;
-                }
+                newNet.RecalculateFlow();
             }
         }
 
-        private Dictionary<IElectricNode, List<IElectricNode>> BuildGraph()
+        private void RegisterNode(ElectricNetwork net, IElectricNode node)
         {
-            var adj = new Dictionary<IElectricNode, List<IElectricNode>>();
-
-            foreach (var conn in _connections)
-            {
-                if (!adj.ContainsKey(conn.Node1)) adj[conn.Node1] = new List<IElectricNode>();
-                if (!adj.ContainsKey(conn.Node2)) adj[conn.Node2] = new List<IElectricNode>();
-
-                adj[conn.Node1].Add(conn.Node2);
-                adj[conn.Node2].Add(conn.Node1);
-            }
-            return adj;
+            net.AddNode(node);
+            _nodeToNetwork[node] = net;
         }
     }
 }
