@@ -44,6 +44,9 @@
     <Reference Include="MySql.Data">
       <HintPath>D:\SteamCMD\steamapps\common\U3DS\Modules\Rocket.Unturned\MySql.Data.dll</HintPath>
     </Reference>
+    <Reference Include="netstandard">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\U3DS\Unturned_Data\Managed\netstandard.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\SteamCMD\steamapps\common\U3DS\Unturned_Data\Managed\Newtonsoft.Json.dll</HintPath>
@@ -120,6 +123,7 @@
     <Compile Include="Models\ConsumerNode.cs" />
     <Compile Include="Models\IElectricNode.cs" />
     <Compile Include="Models\SupplierNode.cs" />
+    <Compile Include="Models\TimerNode.cs" />
     <Compile Include="Resources.cs" />
     <Compile Include="Services\WiringToolService.cs" />
     <Compile Include="Services\NodeInitializationService.cs" />
