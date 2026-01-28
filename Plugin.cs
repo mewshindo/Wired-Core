@@ -8,6 +8,7 @@ using Rocket.Unturned;
 using SDG.Unturned;
 using Wired.Models;
 using Wired.Services;
+using Wired.WiredInteractables;
 
 namespace Wired
 {
@@ -26,6 +27,15 @@ namespace Wired
         public delegate void TimerExpired(TimerNode timer);
         public static event TimerExpired OnTimerExpired;
         public void SendTimerExpired(TimerNode timer) => OnTimerExpired?.Invoke(timer);
+
+        public delegate void DragItemRequested(PlayerInventory inventory, ItemAsset asset, ref bool shouldAllow);
+        public static event DragItemRequested OnDragItemRequested;
+
+        public delegate void SwapItemRequested(PlayerInventory inventory, ItemAsset item1, ItemAsset item2, ref bool shouldAllow);
+        public static event SwapItemRequested OnSwapItemRequested;
+
+        public delegate void DropItemRequested(PlayerInventory inventory, ItemAsset asset, ref bool shouldAllow);
+        public static event DropItemRequested OnDropItemRequested;
 
         protected override void Load()
         {
@@ -123,6 +133,52 @@ namespace Wired
             private static void Postfix(InteractableFarm __instance, uint newPlanted)
             {
                 Console.WriteLine($"newPlanted: {newPlanted}\n ProviderTime: {Provider.time}");
+            }
+        }
+
+        [HarmonyPatch(typeof(PlayerInventory), "ReceiveDragItem")]
+        private static class Patch_PlayerInventory_ReceiveDragItem
+        {
+            private static bool Prefix(PlayerInventory __instance, byte page_0, byte x_0, byte y_0, byte page_1, byte x_1, byte y_1, byte rot_1)
+            {
+                if(__instance.storage.TryGetComponent(out WiredInteractable wi))
+                {
+                    bool shouldAllow = false;
+                    OnDragItemRequested?.Invoke(__instance, __instance.getItem(page_0, __instance.getIndex(page_0, x_0, y_0)).GetAsset(), ref shouldAllow);
+                    return shouldAllow;
+                }
+                return true;
+            }
+        }
+        [HarmonyPatch(typeof(PlayerInventory), "ReceiveSwapItem")]
+        private static class Patch_PlayerInventory_ReceiveSwapItem
+        {
+            private static bool Prefix(PlayerInventory __instance, byte page_0, byte x_0, byte y_0, byte rot_0, byte page_1, byte x_1, byte y_1, byte rot_1)
+            {
+                if(__instance.storage.TryGetComponent(out WiredInteractable wi))
+                {
+                    bool shouldAllow = false;
+                    var item1 = __instance.getItem(page_0, __instance.getIndex(page_0, x_0, y_0)).GetAsset();
+                    var item2 = __instance.getItem(page_1, __instance.getIndex(page_1, x_1, y_1)).GetAsset();
+                    OnSwapItemRequested?.Invoke(__instance, item1, item2, ref shouldAllow);
+                    return shouldAllow;
+                }
+                return true;
+            }
+        }
+        [HarmonyPatch(typeof(PlayerInventory), "ReceiveDropItem")]
+        private static class Patch_PlayerInventory_ReceiveDropItem
+        {
+            private static bool Prefix(PlayerInventory __instance, byte page, byte x, byte y)
+            {
+                if(__instance.storage.TryGetComponent(out WiredInteractable wi))
+                {
+                    bool shouldAllow = false;
+                    var item = __instance.getItem(page, __instance.getIndex(page, x, y)).GetAsset();
+                    OnDropItemRequested?.Invoke(__instance, item, ref shouldAllow);
+                    return shouldAllow;
+                }
+                return true;
             }
         }
     }
