@@ -85,7 +85,7 @@ namespace Wired.Models
             }
 
             sw.Stop();
-            Console.WriteLine($"Recalculated power flow in {sw.ElapsedMilliseconds} ms.");
+            Console.WriteLine($"Recalculated power flow in a {Nodes.Count}-node network, {sw.ElapsedMilliseconds} ms.");
         }
 
         private Dictionary<IElectricNode, List<IElectricNode>> BuildAdjacencyMap()

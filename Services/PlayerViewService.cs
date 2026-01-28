@@ -146,8 +146,8 @@ namespace Wired.Services
                     EffectManager.ClearEffectByGuid(guid, Provider.findTransportConnection(player.CSteamID));
 
                 EffectAsset effect;
-                var node1type = GetComponent<IElectricNode>();
-                var node2type = GetComponent<IElectricNode>();
+                var node1type = _selectedNode[player.CSteamID].GetComponent<IElectricNode>();
+                var node2type = node;
 
                 if (node1type is SupplierNode || node2type is SupplierNode)
                     effect = _resources.preview_power;
@@ -214,6 +214,10 @@ namespace Wired.Services
                 else if (connection.Node1 is SwitchNode || connection.Node2 is SwitchNode)
                 {
                     pathEffect = _resources.path_gate;
+                }
+                else if (connection.Node1 is TimerNode || connection.Node2 is TimerNode)
+                {
+                    pathEffect = _resources.path_timer;
                 }
                 else
                 {

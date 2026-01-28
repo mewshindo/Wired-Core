@@ -33,27 +33,41 @@ namespace Wired.Services
 
         private void onBulletHit(UseableGun gun, BulletInfo bullet, InputInfo hit, ref bool shouldAllow)
         {
-            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID) && _resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
+            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
+                return;
+            if (_resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
                 return;
             shouldAllow = false;
         }
         private void OnAimingChanged_Global(UseableGun gun)
         {
-            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID) && _resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
+            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
+                return;
+            if (_resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
                 return;
 
-            //if(!gun.isAiming) return;
+            if (!gun.isAiming) return;
 
-            //var list = _selectedPath[gun.player.channel.owner.playerID.steamID];
-            //if (list != null && list.Count > 0)
-            //{
-            //    list.RemoveAt(list.Count - 1);
-            //}
+            if(!_selectedPath.TryGetValue(gun.player.channel.owner.playerID.steamID, out List<Vector3> list))
+                _selectedPath[gun.player.channel.owner.playerID.steamID] = new List<Vector3>();
+
+            if (list != null && list.Count > 0)
+            {
+                list.RemoveAt(list.Count - 1);
+            }
+            else
+            {
+                var uplayer = UnturnedPlayer.FromPlayer(gun.player);
+                ClearSelection(uplayer);
+                OnNodeSelectionClearRequested?.Invoke(uplayer);
+            }
         }
 
         private void OnBulletSpawned(UseableGun gun, BulletInfo bullet)
         {
-            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID) && _resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
+            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
+                return;
+            if (_resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
                 return;
 
             UnturnedPlayer player = UnturnedPlayer.FromCSteamID(gun.player.channel.owner.playerID.steamID);
