@@ -13,6 +13,7 @@ namespace Wired.Models
         public bool IsPowered { get; set; }
         public float Consumption { get; set; }
         public bool AllowPowerThrough { get; private set; }
+        public bool SwitchableByPlayer { get; set; } = true;
         public void SetPowered(bool powered) { }
         public void Switch(bool state)
         {

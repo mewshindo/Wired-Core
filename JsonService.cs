@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using Wired.Models;
+using Wired.Utilities;
 
 namespace Wired.Services
 {
@@ -22,7 +23,7 @@ namespace Wired.Services
             if (File.Exists(savepath))
             {
                 _savepath = savepath;
-                Console.WriteLine($"File found at {savepath}");
+                WiredLogger.Log($"File found at {savepath}");
             }
             else
             {
@@ -32,7 +33,7 @@ namespace Wired.Services
                     Directory.CreateDirectory(directory);
                 }
                 _savepath = savepath;
-                Console.WriteLine($"Created file path at {_savepath}");
+                WiredLogger.Log($"Created file path at {_savepath}");
             }
 
             Provider.onCommenceShutdown += SaveToJson;
@@ -42,7 +43,7 @@ namespace Wired.Services
         {
             var nodes = _service.GetAllNodes();
 
-            Console.WriteLine($"Available nodes in service: {nodes.Count}");
+            WiredLogger.Log($"Available nodes in service: {nodes.Count}");
 
             var reverseLookup = new Dictionary<IElectricNode, uint>();
             foreach (var kvp in nodes)
@@ -69,7 +70,7 @@ namespace Wired.Services
 
             string json = JsonConvert.SerializeObject(dataToSave, Formatting.Indented);
             File.WriteAllText(_savepath, json);
-            Console.WriteLine($"Saved {dataToSave.Count} connections to {_savepath}");
+            WiredLogger.Log($"Saved {dataToSave.Count} connections to {_savepath}");
         }
 
         public void LoadFromJson()
@@ -84,11 +85,11 @@ namespace Wired.Services
                 }
             }
 
-            Console.WriteLine($"Available nodes in service: {nodes.Count}");
+            WiredLogger.Log($"Available nodes in service: {nodes.Count}");
 
             if (string.IsNullOrEmpty(_savepath) || !File.Exists(_savepath))
             {
-                Console.WriteLine("savepath null???????????????????????????");
+                WiredLogger.Error("savepath null???????????????????????????");
                 return;
             }
 
@@ -116,16 +117,16 @@ namespace Wired.Services
                 }
                 else
                 {
-                    Console.WriteLine($"Failed to connect {data.Node1ID} -> {data.Node2ID}. " +
+                    WiredLogger.Error($"Failed to connect {data.Node1ID} -> {data.Node2ID}. " +
                                       $"Found Node1? {hasNode1}, Found Node2? {hasNode2}");
 
                     if (nodes.Count > 0 && nodes.Count < 10)
-                        Console.WriteLine($"Available Keys: {string.Join(", ", nodes.Keys)}");
+                        WiredLogger.Log($"Available Keys: {string.Join(", ", nodes.Keys)}");
                 }
             }
 
-            Console.WriteLine($"loadedData count: {loadedData.Count}");
-            Console.WriteLine($"Restored {restoredCount} connections from {_savepath}");
+            WiredLogger.Log($"loadedData count: {loadedData.Count}");
+            WiredLogger.Log($"Restored {restoredCount} connections from {_savepath}");
         }
     }
     [Serializable]

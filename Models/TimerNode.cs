@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using Wired.Utilities;
 
 namespace Wired.Models
 {
@@ -31,11 +32,9 @@ namespace Wired.Models
             _display = GetComponent<InteractableSign>();
             if(_display == null)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Some timer is not a sign (what the hell????) \n" +
+                WiredLogger.Error($"Some timer is not a sign (what the hell????) \n" +
                     $"Name: {BarricadeManager.FindBarricadeByRootTransform(transform).asset.FriendlyNameWithFriendlyType} ({BarricadeManager.FindBarricadeByRootTransform(transform).asset.GUID})\n" +
                     $"Fix immediately!!! >:(");
-                Console.ResetColor();
             }
             InstanceID = BarricadeManager.FindBarricadeByRootTransform(this.transform).instanceID;
         }
@@ -48,7 +47,7 @@ namespace Wired.Models
             _isCountingDown = true;
             AllowPowerThrough = false;
 
-            Console.WriteLine($"TimerNode {InstanceID} starting countdown");
+            WiredLogger.Log($"TimerNode {InstanceID} starting countdown");
             _remainingTime = DelaySeconds;
             _coroutine = StartCoroutine(TimerCoroutine());
         }
@@ -83,7 +82,7 @@ namespace Wired.Models
             _coroutine = null;
             Plugin.Instance.SendTimerExpired(this);
 
-            Console.WriteLine($"TimerNode {InstanceID} Countdown finished");
+            WiredLogger.Log($"TimerNode {InstanceID} Countdown finished");
         }
 
         private string FormattedTime()

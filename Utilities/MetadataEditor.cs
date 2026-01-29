@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using UnityEngine.Windows;
+using Wired.Utilities;
 
 namespace Wired
 {
@@ -23,13 +24,13 @@ namespace Wired
             metadata = null;
             if (_item == null)
             {
-                Console.WriteLine($"_item null");
+                WiredLogger.Error($"_item null");
                 return false;
             }
             var md = _item.metadata.Skip(offset).Take(2).ToArray();
             if (md == null || md.Length == 0)
             {
-                Console.WriteLine($"md null: {md == null}");
+                WiredLogger.Error($"md null: {md == null}");
                 return false;
             }
             metadata = md;
@@ -40,7 +41,7 @@ namespace Wired
             var data = BitConverter.GetBytes(value);
             if(data == null || data.Length == 0)
             {
-                Console.WriteLine("data null");
+                WiredLogger.Error("data null");
                 return;
             }
             if(offset == 2)

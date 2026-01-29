@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Wired.Utilities;
 
 namespace Wired
 {
@@ -79,18 +80,18 @@ namespace Wired
             {
                 AssetParser parser = new AssetParser(asset.getFilePath());
                 string[] stringstoparse = new string[] {
-                    "WiringTool",
-                    "RemoteTool",
-                    "Gate",
-                    "Switch",
-                    "Timer",
-                    "RemoteReceiver",
-                    "RemoteTransmitter",
-                    "ManualTablet"
+                    "WiredBuild WiringTool",
+                    "WiredBuild RemoteTool",
+                    "WiredBuild ManualTablet",
+                    "WiredBuild Gate",
+                    "WiredBuild Switch",
+                    "WiredBuild Timer",
+                    "WiredBuild RemoteReceiver",
+                    "WiredBuild RemoteTransmitter",
                 };
                 if (parser.HasAnyEntry(stringstoparse, out var foundentry))
                 {
-                    Console.WriteLine($"Found wired asset: {asset.name} ({asset.GUID}) as {foundentry}");
+                    WiredLogger.Log($"Found wired asset: {asset.name} ({asset.GUID}) as {foundentry}");
                     switch (foundentry)
                     {
                         default:

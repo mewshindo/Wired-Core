@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace Wired.WiredInteractables
 {
-    public interface WiredInteractable
+    public interface IWiredInteractable
     {
         Interactable interactable { get; }
-        bool isOn { get; }
-        void Toggle(bool state);
+        bool IsOn { get; }
+        void SetPowered(bool state);
     }
 }

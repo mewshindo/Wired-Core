@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using Wired.Utilities;
 
 namespace Wired
 {
@@ -19,7 +20,7 @@ namespace Wired
         public void Awake()
         {
             Player player = this.gameObject.transform.GetComponent<Player>();
-            Console.WriteLine($"added coolevents to {player.name}");
+            WiredLogger.Log($"added coolevents to {player.name}");
             PlayerEquipment equipment2 = player.equipment;
             equipment2.onDequipRequested = (PlayerDequipRequestHandler)Delegate.Combine(equipment2.onDequipRequested, (PlayerDequipRequestHandler)delegate (PlayerEquipment equipment, ref bool shouldAllow)
             {

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Wired.Models;
+using Wired.WiredInteractables;
 
 namespace Wired.Services
 {
@@ -29,6 +30,22 @@ namespace Wired.Services
             WiringToolService.OnNodeLinkRequested += OnNodeLinkRequested;
             Plugin.OnSwitchToggled += OnSwitchToggled;
             Plugin.OnTimerExpired += OnTimerExpired;
+            PlayerDetector.OnPlayerDetected += PlayerDetector_OnPlayerDetected;
+            PlayerDetector.OnPlayerUnDetected += PlayerDetector_OnPlayerUnDetected;
+        }
+
+        private void PlayerDetector_OnPlayerUnDetected(PlayerDetector detector)
+        {
+            var switchnode = detector.GetComponentInParent<SwitchNode>();
+            if (switchnode == null)
+            {
+                
+            }
+        }
+
+        private void PlayerDetector_OnPlayerDetected(PlayerDetector detector)
+        {
+            throw new NotImplementedException();
         }
 
         private void OnTimerExpired(TimerNode timer)

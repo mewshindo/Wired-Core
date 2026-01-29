@@ -1,4 +1,5 @@
 ﻿using SDG.Unturned;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Wired.Models;
+using Wired.Utilities;
+using Wired.WiredInteractables;
 
 namespace Wired.Services
 {
@@ -52,6 +55,38 @@ namespace Wired.Services
                     case WiredAssetType.Switch:
                         var sw = barricade.model.gameObject.AddComponent<SwitchNode>();
                         sw.SetPowered(false);
+                        if(parser.HasEntry("WiredType PlayerDetector"))
+                        {
+                            sw.SwitchableByPlayer = false;
+                            var obj = sw.transform.Find("Detector");
+                            if(obj != null)
+                            {
+                                var detector = obj.gameObject.AddComponent<PlayerDetector>();
+                                if (parser.HasEntry("DetectorConfig"))
+                                {
+                                    if(parser.TryGetString("DetectorType", out string type))
+                                    {
+                                        detector.DetectorType = type == "Line" ? PlayerDetectorType.Line : PlayerDetectorType.Sphere;
+                                    }
+                                    if(parser.TryGetFloat("Radius", out float radius))
+                                        detector.Radius = radius;
+                                    if(parser.HasEntry("Inverted"))
+                                        detector.Inverted = true;
+                                }
+                                else
+                                {
+                                    detector.DetectorType = PlayerDetectorType.Sphere;
+                                    detector.Radius = 5;
+                                    WiredLogger.Warn($"Player detector {barricade.asset.FriendlyNameWithFriendlyType} is not configured, assigning default config: type sphere, radius 5m.");
+                                }
+                            }
+                            else
+                            {
+                                WiredLogger.Error($"Barricade \"{barricade.asset.FriendlyNameWithFriendlyType}\" is configured like a player detector but doesn't have \"Detector\" gameobject, destroying node.");
+                                Component.Destroy(sw);
+                                return;
+                            }
+                        }
                         OnNodeCreated?.Invoke(barricade, sw);
                         return;
 
@@ -106,6 +141,13 @@ namespace Wired.Services
                     node.Consumption = 25;
                 if (barricade.asset.id == 1241) // Charge
                     node.Consumption = 5;
+
+                if(parser.HasEntry("WiredType BatteryCharger"))
+                {
+                    var charger = barricade.model.gameObject.AddComponent<BatteryCharger>();
+                    if(parser.TryGetFloat("ChargePerHour", out float chargerate))
+                        charger.ChargeRateUnitsPerHour = chargerate;
+                }
 
                 OnNodeCreated?.Invoke(barricade, node);
             }

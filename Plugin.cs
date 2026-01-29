@@ -8,6 +8,7 @@ using Rocket.Unturned;
 using SDG.Unturned;
 using Wired.Models;
 using Wired.Services;
+using Wired.Utilities;
 using Wired.WiredInteractables;
 
 namespace Wired
@@ -45,7 +46,7 @@ namespace Wired
             harmony.PatchAll();
             foreach (MethodBase method in harmony.GetPatchedMethods())
             {
-                Console.WriteLine("Patched method: " + method.DeclaringType.FullName + "." + method.Name);
+                WiredLogger.Log("Patched method: " + method.DeclaringType.FullName + "." + method.Name);
             }
 
             U.Events.OnPlayerConnected += OnPlayerConnected;
@@ -68,33 +69,14 @@ namespace Wired
         {
             if (!Provider.getServerWorkshopFileIDs().Contains(3583223837))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("##########################################################");
-                Console.WriteLine("##########################################################");
-                Console.WriteLine("");
-                Console.WriteLine("                 WIRED IS NOT INSTALLED");
-                Console.WriteLine("    Add 3583223837 to your WorkshopDownloadConfig.json");
-                Console.WriteLine("");
-                Console.WriteLine("##########################################################");
-                Console.WriteLine("##########################################################");
-                Console.ResetColor();
-
+                WiredLogger.PluginLoaded(false);
                 Instance.UnloadPlugin();
                 return;
             }
 
-
+            WiredLogger.PluginLoaded(true);
             Resources = new Resources();
             _services = new ServiceContainer(Resources);
-
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("           _              _ ");
-            Console.WriteLine("          (_)            | |");
-            Console.WriteLine(" __      ___ _ __ ___  __| |");
-            Console.WriteLine(" \\ \\ /\\ / / | '__/ _ \\/ _` |        Wired has loaded succesfully!");
-            Console.WriteLine("  \\ V  V /| | | |  __/ (_| |");
-            Console.WriteLine("   \\_/\\_/ |_|_|  \\___|\\__,_|\n");
-            Console.ResetColor();
         }
 
 
@@ -120,6 +102,10 @@ namespace Wired
                 }
                 if (__instance.gameObject.TryGetComponent(out SwitchNode sw))
                 {
+                    if (!sw.SwitchableByPlayer)
+                    {
+                        return false;
+                    }
                     sw.Switch(desiredPowered);
                     return true;
                 }
@@ -132,7 +118,7 @@ namespace Wired
         {
             private static void Postfix(InteractableFarm __instance, uint newPlanted)
             {
-                Console.WriteLine($"newPlanted: {newPlanted}\n ProviderTime: {Provider.time}");
+                WiredLogger.Log($"newPlanted: {newPlanted}\n ProviderTime: {Provider.time}");
             }
         }
 
@@ -141,7 +127,7 @@ namespace Wired
         {
             private static bool Prefix(PlayerInventory __instance, byte page_0, byte x_0, byte y_0, byte page_1, byte x_1, byte y_1, byte rot_1)
             {
-                if(__instance.storage.TryGetComponent(out WiredInteractable wi))
+                if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
                 {
                     bool shouldAllow = false;
                     OnDragItemRequested?.Invoke(__instance, __instance.getItem(page_0, __instance.getIndex(page_0, x_0, y_0)).GetAsset(), ref shouldAllow);
@@ -155,7 +141,7 @@ namespace Wired
         {
             private static bool Prefix(PlayerInventory __instance, byte page_0, byte x_0, byte y_0, byte rot_0, byte page_1, byte x_1, byte y_1, byte rot_1)
             {
-                if(__instance.storage.TryGetComponent(out WiredInteractable wi))
+                if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
                 {
                     bool shouldAllow = false;
                     var item1 = __instance.getItem(page_0, __instance.getIndex(page_0, x_0, y_0)).GetAsset();
@@ -171,7 +157,7 @@ namespace Wired
         {
             private static bool Prefix(PlayerInventory __instance, byte page, byte x, byte y)
             {
-                if(__instance.storage.TryGetComponent(out WiredInteractable wi))
+                if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
                 {
                     bool shouldAllow = false;
                     var item = __instance.getItem(page, __instance.getIndex(page, x, y)).GetAsset();

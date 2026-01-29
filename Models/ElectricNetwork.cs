@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Wired.Utilities;
 
 namespace Wired.Models
 {
@@ -85,7 +86,7 @@ namespace Wired.Models
             }
 
             sw.Stop();
-            Console.WriteLine($"Recalculated power flow in a {Nodes.Count}-node network, {sw.ElapsedMilliseconds} ms.");
+            WiredLogger.Log($"Recalculated power flow in a {Nodes.Count}-node network, {sw.ElapsedMilliseconds} ms.");
         }
 
         private Dictionary<IElectricNode, List<IElectricNode>> BuildAdjacencyMap()

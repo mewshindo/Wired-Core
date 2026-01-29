@@ -78,5 +78,29 @@ namespace Wired
 
             return false;
         }
+        public bool TryGetString(string entry, out string value)
+        {
+            value = null;
+            if (!File.Exists(_path))
+                return false;
+
+            using (var reader = File.OpenText(_path))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    line = line.Trim();
+                    if (line.StartsWith(entry, StringComparison.OrdinalIgnoreCase))
+                    {
+                        value = line.Split(' ')[1];
+                        if(string.IsNullOrEmpty(value))
+                            return false;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
     }
 }
