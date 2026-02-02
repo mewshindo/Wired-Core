@@ -30,8 +30,52 @@ namespace Wired.Services
             WiringToolService.OnNodeLinkRequested += OnNodeLinkRequested;
             Plugin.OnSwitchToggled += OnSwitchToggled;
             Plugin.OnTimerExpired += OnTimerExpired;
+            Plugin.OnGeneratorFuelUpdated += OnGeneratorFuelUpdated;
+            Plugin.OnGeneratorPoweredChanged += OnGeneratorPoweredChanged;
             PlayerDetector.OnPlayerDetected += PlayerDetector_OnPlayerDetected;
             PlayerDetector.OnPlayerUnDetected += PlayerDetector_OnPlayerUnDetected;
+        }
+
+        private void OnGeneratorPoweredChanged(InteractableGenerator generator, bool isPowered)
+        {
+            if (!generator.TryGetComponent(out SupplierNode gen))
+                return;
+            if (generator.fuel <= 0)
+                return;
+
+            if (_nodeToNetwork.TryGetValue(gen, out ElectricNetwork net))
+            {
+                if (isPowered && !gen.IsPowered)
+                {
+                    gen.SetPowered(true);
+                    net.RecalculateFlow();
+                }
+                else if (!isPowered && gen.IsPowered)
+                {
+                    gen.SetPowered(false);
+                    net.RecalculateFlow();
+                }
+            }
+        }
+
+        private void OnGeneratorFuelUpdated(InteractableGenerator generator, ushort newAmount)
+        {
+            if (!generator.TryGetComponent(out SupplierNode gen))
+                return;
+
+            if (_nodeToNetwork.TryGetValue(gen, out ElectricNetwork net))
+            {
+                if (newAmount > 0 && !gen.IsPowered)
+                {
+                    gen.SetPowered(true);
+                    net.RecalculateFlow();
+                }
+                else if (newAmount == 0 && gen.IsPowered)
+                {
+                    gen.SetPowered(false);
+                    net.RecalculateFlow();
+                }
+            }
         }
 
         private void PlayerDetector_OnPlayerUnDetected(PlayerDetector detector)

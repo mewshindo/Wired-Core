@@ -39,7 +39,7 @@ namespace Wired.Wrappers
                     Transform gen = BarricadeManager.dropNonPlantedBarricade(bar, _spot.transform.position, _spot.transform.rotation, 0, 0);
                     if (gen != null)
                     {
-                        BarricadeManager.sendFuel(gen, 2048);
+                        BarricadeManager.sendFuel(gen, 512);
                         BarricadeManager.ServerSetGeneratorPowered(gen.GetComponent<InteractableGenerator>(), true);
                     }
                 }

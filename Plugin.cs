@@ -5,6 +5,8 @@ using HarmonyLib;
 using Rocket.API.Extensions;
 using Rocket.Core.Plugins;
 using Rocket.Unturned;
+using SDG.NetPak;
+using SDG.NetTransport;
 using SDG.Unturned;
 using Wired.Models;
 using Wired.Services;
@@ -19,7 +21,7 @@ namespace Wired
 
         public Resources Resources;
 
-        private ServiceContainer _services;
+        public ServiceContainer Services;
 
         public delegate void SwitchToggled(SwitchNode sw, bool state);
         public static event SwitchToggled OnSwitchToggled;
@@ -38,6 +40,12 @@ namespace Wired
         public delegate void DropItemRequested(PlayerInventory inventory, ItemAsset asset, ref bool shouldAllow);
         public static event DropItemRequested OnDropItemRequested;
 
+        public delegate void GeneratorFuelUpdated(InteractableGenerator generator, ushort newAmount);
+        public static event GeneratorFuelUpdated OnGeneratorFuelUpdated;
+
+        public delegate void GeneratorPoweredChanged(InteractableGenerator generator, bool isPowered);
+        public static event GeneratorPoweredChanged OnGeneratorPoweredChanged;
+
         protected override void Load()
         {
             Instance = this;
@@ -53,7 +61,6 @@ namespace Wired
             U.Events.OnPlayerDisconnected += OnPlayerDisconnected;
             Level.onLevelLoaded += OnLevelLoaded;
         }
-
         protected override void Unload()
         {
             Harmony harmony = new Harmony("com.mew.powerShenanigans");
@@ -76,7 +83,7 @@ namespace Wired
 
             WiredLogger.PluginLoaded(true);
             Resources = new Resources();
-            _services = new ServiceContainer(Resources);
+            Services = new ServiceContainer(Resources);
         }
 
 
@@ -88,6 +95,9 @@ namespace Wired
         private void OnPlayerConnected(Rocket.Unturned.Player.UnturnedPlayer player)
         {
             player.Player.gameObject.AddComponent<PlayerEvents>();
+
+            ITransportConnection connection = player.Player.channel.owner.transportConnection;
+            EffectManager.SendUIEffect(Resources.goggles_ui, Resources.GogglesUIKey, connection, true);
         }
 
         [HarmonyPatch(typeof(InteractableSpot), "ReceiveToggleRequest")]
@@ -112,6 +122,14 @@ namespace Wired
                 return false;
             }
         }
+        [HarmonyPatch(typeof(InteractableOxygenator), "ReceiveToggleRequest")]
+        private static class Patch_InteractableOxygenator_ReceiveToggleRequest
+        {
+            private static bool Prefix(InteractableOxygenator __instance, ServerInvocationContext context, bool desiredPowered)
+            {
+                return false;
+            }
+        }
 
         [HarmonyPatch(typeof(InteractableFarm), "updatePlanted")]
         private static class Patch_InteractableFarm_updatePlanted
@@ -122,50 +140,81 @@ namespace Wired
             }
         }
 
-        [HarmonyPatch(typeof(PlayerInventory), "ReceiveDragItem")]
-        private static class Patch_PlayerInventory_ReceiveDragItem
+        [HarmonyPatch(typeof(InteractableGenerator), "askBurn")]
+        public static class Property_Patch 
         {
-            private static bool Prefix(PlayerInventory __instance, byte page_0, byte x_0, byte y_0, byte page_1, byte x_1, byte y_1, byte rot_1)
+            [HarmonyPrefix]
+            public static void Postfix(InteractableGenerator __instance, ushort amount)
             {
-                if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
+                if(__instance.fuel - amount <= 0)
                 {
-                    bool shouldAllow = false;
-                    OnDragItemRequested?.Invoke(__instance, __instance.getItem(page_0, __instance.getIndex(page_0, x_0, y_0)).GetAsset(), ref shouldAllow);
-                    return shouldAllow;
+                    OnGeneratorFuelUpdated?.Invoke( __instance, (ushort)(__instance.fuel - amount));
                 }
-                return true;
             }
         }
-        [HarmonyPatch(typeof(PlayerInventory), "ReceiveSwapItem")]
-        private static class Patch_PlayerInventory_ReceiveSwapItem
+        [HarmonyPatch(typeof(InteractableGenerator), "askFill")]
+        public static class Property_Patch_Fill
         {
-            private static bool Prefix(PlayerInventory __instance, byte page_0, byte x_0, byte y_0, byte rot_0, byte page_1, byte x_1, byte y_1, byte rot_1)
+            [HarmonyPrefix]
+            public static void Postfix(InteractableGenerator __instance, ushort amount)
             {
-                if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
-                {
-                    bool shouldAllow = false;
-                    var item1 = __instance.getItem(page_0, __instance.getIndex(page_0, x_0, y_0)).GetAsset();
-                    var item2 = __instance.getItem(page_1, __instance.getIndex(page_1, x_1, y_1)).GetAsset();
-                    OnSwapItemRequested?.Invoke(__instance, item1, item2, ref shouldAllow);
-                    return shouldAllow;
-                }
-                return true;
+                OnGeneratorFuelUpdated?.Invoke(__instance, (ushort)(__instance.fuel + amount));
             }
         }
-        [HarmonyPatch(typeof(PlayerInventory), "ReceiveDropItem")]
-        private static class Patch_PlayerInventory_ReceiveDropItem
+        [HarmonyPatch(typeof(InteractableGenerator), "ReceivePowered")]
+        public static class Property_Patch_ReceivePowered
         {
-            private static bool Prefix(PlayerInventory __instance, byte page, byte x, byte y)
+            [HarmonyPrefix]
+            public static void Postfix(InteractableGenerator __instance, bool newPowered)
             {
-                if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
-                {
-                    bool shouldAllow = false;
-                    var item = __instance.getItem(page, __instance.getIndex(page, x, y)).GetAsset();
-                    OnDropItemRequested?.Invoke(__instance, item, ref shouldAllow);
-                    return shouldAllow;
-                }
-                return true;
+                OnGeneratorPoweredChanged?.Invoke(__instance, newPowered);
             }
         }
+
+        //[HarmonyPatch(typeof(PlayerInventory), "ReceiveDragItem")]
+        //private static class Patch_PlayerInventory_ReceiveDragItem
+        //{
+        //    private static bool Prefix(PlayerInventory __instance, byte page_0, byte x_0, byte y_0, byte page_1, byte x_1, byte y_1, byte rot_1)
+        //    {
+        //        if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
+        //        {
+        //            bool shouldAllow = false;
+        //            OnDragItemRequested?.Invoke(__instance, __instance.getItem(page_0, __instance.getIndex(page_0, x_0, y_0)).GetAsset(), ref shouldAllow);
+        //            return shouldAllow;
+        //        }
+        //        return true;
+        //    }
+        //}
+        //[HarmonyPatch(typeof(PlayerInventory), "ReceiveSwapItem")]
+        //private static class Patch_PlayerInventory_ReceiveSwapItem
+        //{
+        //    private static bool Prefix(PlayerInventory __instance, byte page_0, byte x_0, byte y_0, byte rot_0, byte page_1, byte x_1, byte y_1, byte rot_1)
+        //    {
+        //        if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
+        //        {
+        //            bool shouldAllow = false;
+        //            var item1 = __instance.getItem(page_0, __instance.getIndex(page_0, x_0, y_0)).GetAsset();
+        //            var item2 = __instance.getItem(page_1, __instance.getIndex(page_1, x_1, y_1)).GetAsset();
+        //            OnSwapItemRequested?.Invoke(__instance, item1, item2, ref shouldAllow);
+        //            return shouldAllow;
+        //        }
+        //        return true;
+        //    }
+        //}
+        //[HarmonyPatch(typeof(PlayerInventory), "ReceiveDropItem")]
+        //private static class Patch_PlayerInventory_ReceiveDropItem
+        //{
+        //    private static bool Prefix(PlayerInventory __instance, byte page, byte x, byte y)
+        //    {
+        //        if(__instance.storage.TryGetComponent(out IWiredInteractable wi))
+        //        {
+        //            bool shouldAllow = false;
+        //            var item = __instance.getItem(page, __instance.getIndex(page, x, y)).GetAsset();
+        //            OnDropItemRequested?.Invoke(__instance, item, ref shouldAllow);
+        //            return shouldAllow;
+        //        }
+        //        return true;
+        //    }
+        //}
     }
 }

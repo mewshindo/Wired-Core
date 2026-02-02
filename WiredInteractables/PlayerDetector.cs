@@ -22,7 +22,6 @@ namespace Wired.WiredInteractables
         // ----- Detector config -----
         public float Radius { get; set; }
         public bool Inverted { get; set; }
-        public PlayerDetectorType DetectorType { get; set; }
 
         // ---------------------------
 
@@ -80,10 +79,5 @@ namespace Wired.WiredInteractables
                 WiredLogger.Log($"Ignored object {other.gameObject.name} with tag {other.gameObject.tag}");
             }
         }
-    }
-    public enum PlayerDetectorType
-    {
-        Sphere,
-        Line,
     }
 }

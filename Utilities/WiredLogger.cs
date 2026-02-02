@@ -16,11 +16,13 @@ namespace Wired.Utilities
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine($"[Wired] WARN: {message}");
+            Console.ResetColor();
         }
         public static void Error(string message)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"[Wired] ERROR: {message}");
+            Console.ResetColor();
         }
 
         public static void PluginLoaded(bool success)

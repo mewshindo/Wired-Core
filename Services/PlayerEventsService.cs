@@ -31,5 +31,15 @@ namespace Wired
                 OnEquipRequested?.Invoke(player, asset, ref shouldAllow);
             });
         }
+
+        private void onGlassesUpdated(ushort newGlasses, byte newGlassesQuality, byte[] newGlassesState)
+        {
+            WiredLogger.Log($"New glasses quality: {newGlassesQuality}");
+            WiredLogger.Log($"New glasses state length: {newGlassesState.Length}");
+            for (int i = 0; i < newGlassesState.Length; i++)
+            {
+                WiredLogger.Log($"New glasses state[{i}]: {newGlassesState[i]}");
+            }
+        }
     }
 }

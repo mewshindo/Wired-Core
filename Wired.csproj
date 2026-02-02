@@ -118,6 +118,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Services\WiredAssetsService.cs" />
+    <Compile Include="WiredAssets\Items\EngineerGogglesAsset.cs" />
+    <Compile Include="WiredAssets\Items\ManualTabletAsset.cs" />
+    <Compile Include="WiredAssets\Placeables\ConsumerAsset.cs" />
+    <Compile Include="WiredAssets\Placeables\SupplierAsset.cs" />
+    <Compile Include="WiredAssets\IWiredAsset.cs" />
     <Compile Include="JsonService.cs" />
     <Compile Include="Models\ElectricNetwork.cs" />
     <Compile Include="Models\SwitchNode.cs" />
@@ -141,6 +147,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Raycast.cs" />
     <Compile Include="Utilities\WiredLogger.cs" />
+    <Compile Include="WiredAssets\Placeables\SwitchAsset.cs" />
+    <Compile Include="WiredAssets\Placeables\TimerAsset.cs" />
+    <Compile Include="WiredAssets\Items\RemoteToolAsset.cs" />
+    <Compile Include="WiredAssets\Placeables\PlayerDetectorAsset.cs" />
+    <Compile Include="WiredAssets\Items\WiringToolAsset.cs" />
+    <Compile Include="WiredAssets\Placeables\RemoteReceiverAsset.cs" />
+    <Compile Include="WiredAssets\Placeables\RemoteTransmitterAsset.cs" />
     <Compile Include="WiredInteractables\BatteryCharger.cs" />
     <Compile Include="WiredInteractables\IWiredInteractable.cs" />
     <Compile Include="WiredInteractables\PlayerDetector.cs" />

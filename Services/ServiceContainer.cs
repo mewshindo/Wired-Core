@@ -10,6 +10,7 @@ namespace Wired.Services
 {
     public class ServiceContainer
     {
+        public WiredAssetsService WiredAssetsService { get; private set; }
         public NodeInitializationService NodeInitializationService { get; private set; }
         public NodeConnectionsService NodeConnectionsService { get; private set; }
         public WiringToolService WiringToolService { get; private set; }
@@ -17,11 +18,12 @@ namespace Wired.Services
         public JsonService JsonService { get; set; }
         public ServiceContainer(Resources resources)
         {
-            NodeInitializationService = new NodeInitializationService(resources);
+            WiredAssetsService = new WiredAssetsService();
+            NodeInitializationService = new NodeInitializationService(WiredAssetsService);
             NodeConnectionsService = new NodeConnectionsService();
-            WiringToolService = new WiringToolService(resources);
+            WiringToolService = new WiringToolService(WiredAssetsService);
             PlayerViewService = new GameObject("PlayerViewService").AddComponent<PlayerViewService>();
-            PlayerViewService.Init(resources, NodeConnectionsService, WiringToolService.SelectedNode);
+            PlayerViewService.Init(WiredAssetsService, resources, NodeConnectionsService, WiringToolService.SelectedNode);
             JsonService = new JsonService(NodeConnectionsService, Path.Combine(Plugin.Instance.Directory, "Nodes.json"));
             JsonService.LoadFromJson();
         }

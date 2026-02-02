@@ -1,7 +1,7 @@
 ﻿using SDG.Unturned;
-using System;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using Wired.WiredAssets;
 using Wired.Wrappers;
 
 namespace Wired.Models
@@ -9,6 +9,7 @@ namespace Wired.Models
     public class ConsumerNode : MonoBehaviour, IElectricNode
     {
         public uint InstanceID {  get; private set; }
+        public IWiredAsset Asset { get; set; }
         public bool IsPowered { get; set; } = true;
         public float Consumption { get; set; }
         public bool AllowPowerThrough { get; set; } = true;

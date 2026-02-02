@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Wired.Services;
+using Wired.WiredAssets;
 using Wired.Wrappers;
 
 namespace Wired.Models
@@ -11,6 +12,7 @@ namespace Wired.Models
     {
         public uint InstanceID { get; private set; }
         public bool IsPowered { get; set; }
+        public IWiredAsset Asset { get; set; }
         public float Consumption { get; set; }
         public bool AllowPowerThrough { get; private set; }
         public bool SwitchableByPlayer { get; set; } = true;

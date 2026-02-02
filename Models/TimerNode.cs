@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using Wired.Utilities;
+using Wired.WiredAssets;
 
 namespace Wired.Models
 {
@@ -11,6 +12,7 @@ namespace Wired.Models
         private float _remainingTime = 0f;
         public uint InstanceID { get; private set; }
         public bool IsPowered { get; set; }
+        public IWiredAsset Asset { get; set; }
         public float Consumption { get; set; }
         public ushort DelaySeconds { get; set; }
         public bool AllowPowerThrough { get; private set; }

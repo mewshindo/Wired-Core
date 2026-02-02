@@ -46,7 +46,7 @@ namespace Wired.Models
                     var current = queue.Dequeue();
                     islandNodes.Add(current);
 
-                    if (current is SupplierNode sup) currentIslandSupply += sup.Supply;
+                    if (current is SupplierNode sup && sup.IsPowered) currentIslandSupply += sup.Supply;
                     if (current is ConsumerNode cons) currentIslandConsumption += cons.Consumption;
 
                     if (!current.AllowPowerThrough)

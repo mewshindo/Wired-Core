@@ -5,12 +5,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Wired.Models;
+using Wired.WiredAssets;
 
 namespace Wired.Services
 {
     public class WiringToolService
     {
-        private Resources _resources;
+        private WiredAssetsService _assets;
         public readonly Dictionary<CSteamID, Transform> SelectedNode = new Dictionary<CSteamID, Transform>();
         private readonly Dictionary<CSteamID, List<Vector3>> _selectedPath = new Dictionary<CSteamID, List<Vector3>>();
 
@@ -22,9 +23,9 @@ namespace Wired.Services
 
         public delegate void NodeConnectionRequestedHandler(UnturnedPlayer player, IElectricNode node1, IElectricNode node2, List<Vector3> wirepath);
         public static event NodeConnectionRequestedHandler OnNodeLinkRequested;
-        public WiringToolService(Resources resources)
+        public WiringToolService(WiredAssetsService assets)
         {
-            _resources = resources;
+            _assets = assets;
             UseableGun.onBulletSpawned += OnBulletSpawned;
             OnNodeSelectionClearRequested += ClearSelection;
             UseableGun.OnAimingChanged_Global += OnAimingChanged_Global;
@@ -33,17 +34,17 @@ namespace Wired.Services
 
         private void onBulletHit(UseableGun gun, BulletInfo bullet, InputInfo hit, ref bool shouldAllow)
         {
-            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
+            if (!_assets.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
                 return;
-            if (_resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
+            if (_assets.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
                 return;
             shouldAllow = false;
         }
         private void OnAimingChanged_Global(UseableGun gun)
         {
-            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
+            if (!_assets.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
                 return;
-            if (_resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
+            if (_assets.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
                 return;
 
             if (!gun.isAiming) return;
@@ -65,9 +66,9 @@ namespace Wired.Services
 
         private void OnBulletSpawned(UseableGun gun, BulletInfo bullet)
         {
-            if (!_resources.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
+            if (!_assets.WiredAssets.ContainsKey(gun.equippedGunAsset.GUID))
                 return;
-            if (_resources.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
+            if (_assets.WiredAssets[gun.equippedGunAsset.GUID].Type != WiredAssetType.WiringTool)
                 return;
 
             UnturnedPlayer player = UnturnedPlayer.FromCSteamID(gun.player.channel.owner.playerID.steamID);

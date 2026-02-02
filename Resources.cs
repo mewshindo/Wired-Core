@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Wired.WiredAssets;
 using Wired.Utilities;
 
 namespace Wired
@@ -28,12 +29,14 @@ namespace Wired
 
         public EffectAsset wire_generic;
 
+        public EffectAsset goggles_ui;
+
         public ItemBarricadeAsset generator_technical;
 
         public List<Guid> nodeeffects = new List<Guid>();
         public List<Guid> previeweffects = new List<Guid>();
+        public const short GogglesUIKey = 15302;
 
-        public Dictionary<Guid, WiredAsset> WiredAssets = new Dictionary<Guid, WiredAsset>();
         public Resources()
         {
             node_consumer = (EffectAsset)Assets.find(new Guid("ad1529d6692f473ead2ac79e70e273fb"));
@@ -52,6 +55,8 @@ namespace Wired
             path_timer = (EffectAsset)Assets.find(new Guid("e0377b8351c945a797350447bd513a1e"));
             preview_timer = (EffectAsset)Assets.find(new Guid("d9eac6e465944769b37a3cc8f605a499"));
 
+            goggles_ui = (EffectAsset)Assets.find(new Guid("1b826f8e3be1454384a6130f3298ddf9"));
+
             generator_technical = (ItemBarricadeAsset)Assets.find(new Guid("101d13181ef1407ca583686f36663a0f"));
 
             nodeeffects.Add(node_consumer.GUID);
@@ -67,82 +72,6 @@ namespace Wired
             previeweffects.Add(preview_power.GUID);
             previeweffects.Add(preview_gate.GUID);
             previeweffects.Add(preview_timer.GUID);
-
-            PopulateAssets();
-        }
-
-        private void PopulateAssets()
-        {
-            List<ItemAsset> items = new List<ItemAsset>();
-            Assets.find(items);
-
-            foreach (ItemAsset asset in items)
-            {
-                AssetParser parser = new AssetParser(asset.getFilePath());
-                string[] stringstoparse = new string[] {
-                    "WiredBuild WiringTool",
-                    "WiredBuild RemoteTool",
-                    "WiredBuild ManualTablet",
-                    "WiredBuild Gate",
-                    "WiredBuild Switch",
-                    "WiredBuild Timer",
-                    "WiredBuild RemoteReceiver",
-                    "WiredBuild RemoteTransmitter",
-                };
-                if (parser.HasAnyEntry(stringstoparse, out var foundentry))
-                {
-                    WiredLogger.Log($"Found wired asset: {asset.name} ({asset.GUID}) as {foundentry}");
-                    switch (foundentry)
-                    {
-                        default:
-                            break;
-                        case "WiringTool":
-                            WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.WiringTool));
-                            break;
-                        case "RemoteTool":
-                            WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteTool));
-                            break;
-                        case "ManualTablet":
-                            WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.ManualTablet));
-                            break;
-                        case "Gate":
-                            WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Switch));
-                            break;
-                        case "Switch":
-                            WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Switch));
-                            break;
-                        case "Timer":
-                            WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.Timer));
-                            break;
-                        case "RemoteReceiver":
-                            WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteReceiver));
-                            break;
-                        case "RemoteTransmitter":
-                            WiredAssets.Add(asset.GUID, new WiredAsset(asset.GUID, WiredAssetType.RemoteTransmitter));
-                            break;
-                    }
-                }
-            }
-        }
-    }
-    public enum WiredAssetType
-    {
-        WiringTool,
-        RemoteTool,
-        ManualTablet,
-        Switch,
-        Timer,
-        RemoteReceiver,
-        RemoteTransmitter
-    }
-    public class WiredAsset
-    {
-        public Guid GUID;
-        public WiredAssetType Type;
-        public WiredAsset(Guid guid, WiredAssetType type)
-        {
-            GUID = guid;
-            Type = type;
         }
     }
 }
