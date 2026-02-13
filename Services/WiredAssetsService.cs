@@ -124,6 +124,16 @@ namespace Wired.Services
                 WiredAssets.Add(asset.GUID, new RemoteTransmitterAsset(asset.GUID, cons, range));
                 return;
             }
+            if(parser.HasEntry("WiredBuild NetworkDataDisplay"))
+            {
+                WiredAssets.Add(asset.GUID, new NetworkDataDisplayAsset(asset.GUID));
+                return;
+            }
+            if(parser.HasEntry("WiredBuild BatteryCharger"))
+            {
+                var chargerate = parser.TryGetFloat("BatteryCharger_ChargePerHour", out float cpr) ? cpr : 100f;
+                WiredAssets.Add(asset.GUID, new BatteryChargerAsset(asset.GUID, chargerate));
+            }
             WiredAssets.Add(asset.GUID, new ConsumerAsset(asset.GUID, consumption));
         }
         private void PopulateSupplier(AssetParser parser, ItemAsset asset)

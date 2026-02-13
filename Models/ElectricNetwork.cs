@@ -16,10 +16,12 @@ namespace Wired.Models
         public float TotalSupply { get; private set; }
         public float TotalConsumption { get; private set; }
 
+        public static event Action<ElectricNetwork> PowerUpdated;
+
         public void AddNode(IElectricNode node) => Nodes.Add(node);
         public void AddConnection(NodeConnection conn) => Connections.Add(conn);
 
-        public void RecalculateFlow()
+        public void RecalculatePower()
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -84,6 +86,8 @@ namespace Wired.Models
                     }
                 }
             }
+
+            PowerUpdated.Invoke(this);
 
             sw.Stop();
             WiredLogger.Log($"Recalculated power flow in a {Nodes.Count}-node network, {sw.ElapsedMilliseconds} ms.");

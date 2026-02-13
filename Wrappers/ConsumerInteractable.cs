@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Wired.WiredInteractables;
 
 namespace Wired.Wrappers
 {
@@ -18,6 +19,7 @@ namespace Wired.Wrappers
         private InteractableOxygenator _oxygenator;
         private InteractableSafezone _safezone;
         private InteractableCharge _charge;
+        private IWiredInteractable _wiredinteractable;
         public ConsumerInteractable(Transform barricade)
         {
             _spot = barricade.GetComponent<InteractableSpot>();
@@ -52,6 +54,8 @@ namespace Wired.Wrappers
                 BarricadeManager.ServerSetSafezonePowered(_safezone, powered);
             if (_charge != null)
                 _charge.Detonate(UnturnedPlayer.FromCSteamID(new CSteamID(_charge.owner)).Player);
+            if(_wiredinteractable != null)
+                _wiredinteractable.SetPowered(true);
         }
     }
 }

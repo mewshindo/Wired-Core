@@ -100,6 +100,22 @@ namespace Wired.Services
                     cons.Consumption = consumerAsset.Consumption;
                     createdNode = cons;
                     break;
+
+                case NetworkDataDisplayAsset networkDataDisplayAsset:
+                    var ndaa = barricade.model.gameObject.AddComponent<ConsumerNode>();
+                    barricade.model.gameObject.AddComponent<NetworkDataDisplay>();
+                    ndaa.Asset = networkDataDisplayAsset;
+                    ndaa.SetPowered(false);
+                    ndaa.Consumption = networkDataDisplayAsset.Consumption;
+                    break;
+
+                case BatteryChargerAsset batteryChargerAsset:
+                    var bca = barricade.model.gameObject.AddComponent<ConsumerNode>();
+                    barricade.model.gameObject.AddComponent<BatteryCharger>();
+                    bca.Asset = batteryChargerAsset;
+                    bca.SetPowered(false);
+                    bca.Consumption = bca.Consumption;
+                    break;
             }
 
             if (createdNode != null)

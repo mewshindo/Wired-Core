@@ -21,7 +21,6 @@ namespace Wired.WiredAssets
         Switch,
         Timer,
         RemoteReceiver,
-        RemoteTransmitter,
         PlayerDetector,
         EngineerGoggles,
     }

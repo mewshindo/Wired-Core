@@ -119,8 +119,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Services\WiredAssetsService.cs" />
+    <Compile Include="WiredAssets\Placeables\BatteryChargerAsset.cs" />
     <Compile Include="WiredAssets\Items\EngineerGogglesAsset.cs" />
     <Compile Include="WiredAssets\Items\ManualTabletAsset.cs" />
+    <Compile Include="WiredAssets\Placeables\NetworkDataDisplayAsset.cs" />
     <Compile Include="WiredAssets\Placeables\ConsumerAsset.cs" />
     <Compile Include="WiredAssets\Placeables\SupplierAsset.cs" />
     <Compile Include="WiredAssets\IWiredAsset.cs" />
@@ -156,6 +158,7 @@
     <Compile Include="WiredAssets\Placeables\RemoteTransmitterAsset.cs" />
     <Compile Include="WiredInteractables\BatteryCharger.cs" />
     <Compile Include="WiredInteractables\IWiredInteractable.cs" />
+    <Compile Include="WiredInteractables\NetworkDataDisplay.cs" />
     <Compile Include="WiredInteractables\PlayerDetector.cs" />
     <Compile Include="Wrappers\ConsumerInteractable.cs" />
   </ItemGroup>

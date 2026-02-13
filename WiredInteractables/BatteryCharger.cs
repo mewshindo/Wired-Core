@@ -10,7 +10,7 @@ namespace Wired.WiredInteractables
         public Interactable interactable { get; private set; }
         private ItemJar battery;
 
-        public float ChargeRateUnitsPerHour = 100;
+        public float ChargeRateUnitsPerHour { get; set; } = 100;
 
         private float _chargeRate;
         private float _dueCharge;
@@ -27,6 +27,7 @@ namespace Wired.WiredInteractables
             if (!TryGetComponent(out InteractableStorage storage))
             {
                 Destroy(this);
+                return;
             }
 
             interactable = storage;
