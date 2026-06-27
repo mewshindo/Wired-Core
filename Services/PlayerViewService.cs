@@ -39,7 +39,7 @@ namespace Wired.Services
 
         private void OnGlassesChanged_Global(PlayerClothing obj)
         {
-            WiredLogger.Log($"Player {obj.player.channel.owner.playerID.steamID} changed glasses.");
+            WiredLogger.Info($"Player {obj.player.channel.owner.playerID.steamID} changed glasses.");
             if (_playersWithGogglesOn.Contains(UnturnedPlayer.FromPlayer(obj.player)))
             {
                 if(obj.glassesAsset == null)
@@ -62,7 +62,7 @@ namespace Wired.Services
             if (_assets.WiredAssets.ContainsKey(obj.glassesAsset.GUID) && !(_assets.WiredAssets[obj.glassesAsset.GUID] is EngineerGogglesAsset))
             {
                 _playersWithGogglesOn.Add(UnturnedPlayer.FromPlayer(obj.player));
-                WiredLogger.Log($"Player {obj.player.channel.owner.playerID.steamID} has Wired Engineer Goggles on.");
+                WiredLogger.Info($"Player {obj.player.channel.owner.playerID.steamID} has Wired Engineer Goggles on.");
             }
         }
 
@@ -140,8 +140,7 @@ namespace Wired.Services
                 var player = UnturnedPlayer.FromSteamPlayer(steamplayer);
 
                 if (!_playersWithGogglesOn.Contains(player) && !_playersInLinkingMode.Contains(player))
-                    return;
-
+                    continue;
 
                 Raycast ray = new Raycast(player.Player, 16);
                 BarricadeDrop drop = ray.GetBarricade(out _, out float distance);

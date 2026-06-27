@@ -90,7 +90,7 @@ namespace Wired.Models
             PowerUpdated?.Invoke(this, sw.ElapsedTicks/10000f);
 
             sw.Stop();
-            WiredLogger.Log($"Recalculated power flow in a {Nodes.Count}-node network, took {sw.ElapsedTicks/10000f} ms.");
+            WiredLogger.Info($"Recalculated power flow in a {Nodes.Count}-node network, took {sw.ElapsedTicks/10000f} ms.");
         }
 
         private Dictionary<IElectricNode, List<IElectricNode>> BuildAdjacencyMap()

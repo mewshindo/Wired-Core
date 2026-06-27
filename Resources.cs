@@ -27,7 +27,10 @@ namespace Wired
         public EffectAsset path_timer;
         public EffectAsset preview_timer;
 
-        public EffectAsset wire_generic;
+        public EffectAsset wire_2m;
+        public EffectAsset wire_4m;
+        public EffectAsset wire_6m;
+        public EffectAsset wire_8m;
 
         public EffectAsset goggles_ui;
 
@@ -56,6 +59,11 @@ namespace Wired
             preview_timer = (EffectAsset)Assets.find(new Guid("d9eac6e465944769b37a3cc8f605a499"));
 
             goggles_ui = (EffectAsset)Assets.find(new Guid("1b826f8e3be1454384a6130f3298ddf9"));
+
+            wire_2m = (EffectAsset)Assets.find(new Guid("d29b911b2d1a4b4f9100c24e6d08b125"));
+            wire_4m = (EffectAsset)Assets.find(new Guid("2581cc5b12df417f9cd53c3bdd8cf764"));
+            wire_6m = (EffectAsset)Assets.find(new Guid("cabc431d23c64693832dcfaea438a219"));
+            wire_8m = (EffectAsset)Assets.find(new Guid("4548122b04b74bcba1e59186f68683df"));
 
             generator_technical = (ItemBarricadeAsset)Assets.find(new Guid("101d13181ef1407ca583686f36663a0f"));
 

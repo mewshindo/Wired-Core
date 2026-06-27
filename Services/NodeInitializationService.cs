@@ -144,8 +144,6 @@ namespace Wired.Services
                     else
                     {
                         Console.WriteLine($"No moving part");
-
-
                     }
                     createdNode = supplier;
                     break;

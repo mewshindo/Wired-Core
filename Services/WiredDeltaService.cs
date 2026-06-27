@@ -106,7 +106,7 @@ namespace Wired.Services
             {
                 serviceActive = true;
                 UnturnedChat.Say(caller, "Connected to Wired Delta!", UnityEngine.Color.green);
-                WiredLogger.Log("Connected to Wired Delta with session ID: " + _sessionId);
+                WiredLogger.Info("Connected to Wired Delta with session ID: " + _sessionId);
             }
             else
             {
@@ -152,7 +152,7 @@ namespace Wired.Services
             {
                 serviceActive = false;
                 UnturnedChat.Say(caller, "Disconnected from Wired Delta.", UnityEngine.Color.green);
-                WiredLogger.Log("Disconnected from Wired Delta.");
+                WiredLogger.Info("Disconnected from Wired Delta.");
             }
             else
             {

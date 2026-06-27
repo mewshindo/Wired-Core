@@ -68,7 +68,7 @@ namespace Wired.WiredInteractables
             }
             else
             {
-                WiredLogger.Log($"Ignored object {other.gameObject.name} with tag {other.gameObject.tag}");
+                WiredLogger.Info($"Ignored object {other.gameObject.name} with tag {other.gameObject.tag}");
             }
         }
         public void OnTriggerExit(Collider other)
@@ -81,7 +81,7 @@ namespace Wired.WiredInteractables
             }
             else
             {
-                WiredLogger.Log($"Ignored object {other.gameObject.name} with tag {other.gameObject.tag}");
+                WiredLogger.Info($"Ignored object {other.gameObject.name} with tag {other.gameObject.tag}");
             }
         }
     }

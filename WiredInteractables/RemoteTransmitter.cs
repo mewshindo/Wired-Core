@@ -25,7 +25,7 @@ namespace Wired.WiredInteractables
         public void SetPowered(bool state)
         {
             IsOn = state;
-            WiredLogger.Log($"Remote transmitter on frequency {Frequency} turned {(IsOn ? "ON" : "OFF")}");
+            WiredLogger.Info($"Remote transmitter on frequency {Frequency} turned {(IsOn ? "ON" : "OFF")}");
             if (IsOn)
             {
                 OnRemoteTransmissionCommenced?.Invoke(Frequency, RemoteSignalType.ON);
@@ -83,7 +83,7 @@ namespace Wired.WiredInteractables
                 {
                     BarricadeManager.ServerSetSignText((InteractableSign)interactable, $"FREQ {Frequency}");
                 }
-                WiredLogger.Log($"Set frequency to {Frequency}");
+                WiredLogger.Info($"Set frequency to {Frequency}");
             }
             catch (Exception)
             {

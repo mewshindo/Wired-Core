@@ -43,7 +43,7 @@ namespace Wired.WiredInteractables
             {
                 if (_code == code)
                 {
-                    WiredLogger.Log($"Keypad code correct for instance {_instanceId}, activating connected nodes.");
+                    WiredLogger.Info($"Keypad code correct for instance {_instanceId}, activating connected nodes.");
                     transform.GetComponent<GateNode>().Switch(true);
                     if(interactable != null)
                     {

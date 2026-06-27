@@ -16,6 +16,7 @@ namespace Wired.Models
         public float Consumption { get; set; }
         public bool AllowPowerThrough { get; private set; }
         public bool SwitchableByPlayer { get; set; } = true;
+        public Vector3 WireConnectPoint { get; set; }
 
         private InteractableSpot _spot;
         /// <summary>
@@ -35,6 +36,9 @@ namespace Wired.Models
             _spot = GetComponent<InteractableSpot>();
             AllowPowerThrough = _spot == null ? false : _spot.isPowered;
             InstanceID = BarricadeManager.FindBarricadeByRootTransform(this.transform).instanceID;
+
+            var p = transform.Find("WireConnectPoint");
+            if (p != null) WireConnectPoint = p.position;
         }
     }
 }

@@ -8,6 +8,11 @@ namespace Wired.Utilities
 {
     public class WiredLogger
     {
+        public static void Info(string message)
+        {
+            return;
+            Console.WriteLine($"[Wired]: {message}");
+        }
         public static void Log(string message)
         {
             Console.WriteLine($"[Wired]: {message}");

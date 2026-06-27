@@ -67,7 +67,7 @@ namespace Wired
             harmony.PatchAll();
             foreach (MethodBase method in harmony.GetPatchedMethods())
             {
-                WiredLogger.Log("Patched method: " + method.DeclaringType.FullName + "." + method.Name);
+                WiredLogger.Info("Patched method: " + method.DeclaringType.FullName + "." + method.Name);
             }
 
             U.Events.OnPlayerConnected += OnPlayerConnected;
@@ -133,11 +133,11 @@ namespace Wired
 
         private void OnModifySignRequested(CSteamID instigator, InteractableSign sign, ref string text, ref bool shouldAllow)
         {
-            if(sign.gameObject.TryGetComponent(out RemoteTransmitter rt))
+            if (sign.gameObject.TryGetComponent(out RemoteTransmitter rt))
             {
                 rt.TrySetFrequency(text, PlayerTool.getPlayer(instigator));
             }
-            else if(sign.gameObject.TryGetComponent(out RemoteReceiver rr))
+            else if (sign.gameObject.TryGetComponent(out RemoteReceiver rr))
             {
                 rr.TrySetFrequency(text, PlayerTool.getPlayer(instigator));
             }
@@ -155,23 +155,30 @@ namespace Wired
                 Player player = context.GetPlayer();
                 if (player == null)
                 {
+                    Console.WriteLine($"ReceiveToggleRequest behaviour 1");
                     return true;
                 }
 
                 if (__instance.gameObject.TryGetComponent(out GateNode sw))
                 {
+                    Console.WriteLine($"ReceiveToggleRequest behaviour 2");
+
                     if (!sw.SwitchableByPlayer)
                     {
+                        Console.WriteLine($"ReceiveToggleRequest behaviour 3");
                         if (__instance.gameObject.TryGetComponent(out Keypad kp))
                         {
+                            Console.WriteLine($"ReceiveToggleRequest behaviour 4");
                             OnKeypadInteractRequested?.Invoke(kp, player);
                             return false;
                         }
                         return false;
                     }
+                    Console.WriteLine($"ReceiveToggleRequest behaviour 5");
                     sw.Switch(desiredPowered);
                     return true;
                 }
+                Console.WriteLine($"ReceiveToggleRequest behaviour 6");
                 return false;
             }
         }
@@ -189,18 +196,18 @@ namespace Wired
         {
             private static void Postfix(InteractableFarm __instance, uint newPlanted)
             {
-                WiredLogger.Log($"newPlanted: {newPlanted}\n ProviderTime: {Provider.time}");
+                WiredLogger.Info($"newPlanted: {newPlanted}\n ProviderTime: {Provider.time}");
             }
         }
 
         [HarmonyPatch(typeof(InteractableGenerator), "askBurn")]
-        public static class Property_Patch 
+        public static class Property_Patch
         {
             public static void Postfix(InteractableGenerator __instance, ushort amount)
             {
-                if(__instance.fuel - amount <= 0)
+                if (__instance.fuel - amount <= 0)
                 {
-                    OnGeneratorFuelUpdated?.Invoke( __instance, (ushort)(__instance.fuel - amount));
+                    OnGeneratorFuelUpdated?.Invoke(__instance, (ushort)(__instance.fuel - amount));
                 }
             }
         }

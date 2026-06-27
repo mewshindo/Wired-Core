@@ -51,7 +51,7 @@ namespace Wired.WiredInteractables
 
         private void OnRemoteTransmissionCommenced(string frequency, RemoteSignalType signal)
         {
-            WiredLogger.Log($"Received remote signal on frequency {frequency} with signal {signal}");
+            WiredLogger.Info($"Received remote signal on frequency {frequency} with signal {signal}");
             if (frequency == Frequency)
             {
                 if(signal != RemoteSignalType.TOGGLE)
@@ -84,7 +84,7 @@ namespace Wired.WiredInteractables
                 {
                     BarricadeManager.ServerSetSignText((InteractableSign)interactable, $"FREQ {Frequency}");
                 }
-                WiredLogger.Log($"Set frequency to {Frequency}");
+                WiredLogger.Info($"Set frequency to {Frequency}");
             }
             catch (Exception)
             {

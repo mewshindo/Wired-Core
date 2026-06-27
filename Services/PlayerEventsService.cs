@@ -20,7 +20,7 @@ namespace Wired
         public void Awake()
         {
             Player player = this.gameObject.transform.GetComponent<Player>();
-            WiredLogger.Log($"added coolevents to {player.name}");
+            WiredLogger.Info($"added coolevents to {player.name}");
             PlayerEquipment equipment2 = player.equipment;
             equipment2.onDequipRequested = (PlayerDequipRequestHandler)Delegate.Combine(equipment2.onDequipRequested, (PlayerDequipRequestHandler)delegate (PlayerEquipment equipment, ref bool shouldAllow)
             {
@@ -34,11 +34,11 @@ namespace Wired
 
         private void onGlassesUpdated(ushort newGlasses, byte newGlassesQuality, byte[] newGlassesState)
         {
-            WiredLogger.Log($"New glasses quality: {newGlassesQuality}");
-            WiredLogger.Log($"New glasses state length: {newGlassesState.Length}");
+            WiredLogger.Info($"New glasses quality: {newGlassesQuality}");
+            WiredLogger.Info($"New glasses state length: {newGlassesState.Length}");
             for (int i = 0; i < newGlassesState.Length; i++)
             {
-                WiredLogger.Log($"New glasses state[{i}]: {newGlassesState[i]}");
+                WiredLogger.Info($"New glasses state[{i}]: {newGlassesState[i]}");
             }
         }
     }

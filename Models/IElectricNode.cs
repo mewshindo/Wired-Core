@@ -1,4 +1,5 @@
 ﻿using SDG.Unturned;
+using UnityEngine;
 using Wired.WiredAssets;
 
 namespace Wired.Models
@@ -10,6 +11,7 @@ namespace Wired.Models
         bool IsPowered { get; }
         float Consumption { get; }
         bool AllowPowerThrough { get; }
+        Vector3 WireConnectPoint { get; }
         void SetPowered(bool powered);
     }
 }

@@ -23,7 +23,7 @@ namespace Wired.Services
             if (File.Exists(savepath))
             {
                 _savepath = savepath;
-                WiredLogger.Log($"File found at {savepath}");
+                WiredLogger.Info($"File found at {savepath}");
             }
             else
             {
@@ -33,7 +33,7 @@ namespace Wired.Services
                     Directory.CreateDirectory(directory);
                 }
                 _savepath = savepath;
-                WiredLogger.Log($"Created file path at {_savepath}");
+                WiredLogger.Info($"Created file path at {_savepath}");
             }
 
             Provider.onCommenceShutdown += SaveToJson;
@@ -43,7 +43,7 @@ namespace Wired.Services
         {
             var nodes = _service.GetAllNodes();
 
-            WiredLogger.Log($"Available nodes in service: {nodes.Count}");
+            WiredLogger.Info($"Available nodes in service: {nodes.Count}");
 
             var reverseLookup = new Dictionary<IElectricNode, uint>();
             foreach (var kvp in nodes)
@@ -70,7 +70,7 @@ namespace Wired.Services
 
             string json = JsonConvert.SerializeObject(dataToSave, Formatting.Indented);
             File.WriteAllText(_savepath, json);
-            WiredLogger.Log($"Saved {dataToSave.Count} connections to {_savepath}");
+            WiredLogger.Info($"Saved {dataToSave.Count} connections to {_savepath}");
         }
 
         public void LoadFromJson()
@@ -85,7 +85,7 @@ namespace Wired.Services
                 }
             }
 
-            WiredLogger.Log($"Available nodes in service: {nodes.Count}");
+            WiredLogger.Info($"Available nodes in service: {nodes.Count}");
 
             if (string.IsNullOrEmpty(_savepath) || !File.Exists(_savepath))
             {
@@ -121,12 +121,12 @@ namespace Wired.Services
                                       $"Found Node1? {hasNode1}, Found Node2? {hasNode2}");
 
                     if (nodes.Count > 0 && nodes.Count < 10)
-                        WiredLogger.Log($"Available Keys: {string.Join(", ", nodes.Keys)}");
+                        WiredLogger.Info($"Available Keys: {string.Join(", ", nodes.Keys)}");
                 }
             }
 
-            WiredLogger.Log($"loadedData count: {loadedData.Count}");
-            WiredLogger.Log($"Restored {restoredCount} connections from {_savepath}");
+            WiredLogger.Info($"loadedData count: {loadedData.Count}");
+            WiredLogger.Info($"Restored {restoredCount} connections from {_savepath}");
         }
     }
     [Serializable]

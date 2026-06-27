@@ -18,6 +18,7 @@ namespace Wired.Models
         public float Consumption { get; } = 0;
         public bool AllowPowerThrough { get; } = true;
         public float Supply { get; set; }
+        public Vector3 WireConnectPoint { get; set; }
 
 
         private Interactable _interactable;
@@ -43,6 +44,9 @@ namespace Wired.Models
             {
                 _interactable = spot;
             }
+
+            var p = transform.Find("WireConnectPoint");
+            if (p != null) WireConnectPoint = p.position;
         }
     }
 }

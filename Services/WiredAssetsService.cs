@@ -41,7 +41,7 @@ namespace Wired.Services
                 if (!WiredAssets.ContainsKey(asset.GUID))
                 {
                     WiredAssets.Add(asset.GUID, asset);
-                    WiredLogger.Log($"Added default wired asset: ({asset.GUID})");
+                    WiredLogger.Info($"Added default wired asset: ({asset.GUID})");
                 }
             }
         }
@@ -63,7 +63,7 @@ namespace Wired.Services
                 };
                 if (parser.HasAnyEntry(stringstoparse, out var foundentry))
                 {
-                    WiredLogger.Log($"Found wired asset: {asset.name} ({asset.GUID}) as {foundentry}");
+                    WiredLogger.Info($"Found wired asset: {asset.name} ({asset.GUID}) as {foundentry}");
                     switch (foundentry.Split(' ')[1])
                     {
                         case "WiringTool":
@@ -125,7 +125,7 @@ namespace Wired.Services
         }
         private void PopulateConsumer(AssetParser parser, ItemAsset asset)
         {
-            var consumption = parser.TryGetFloat("Power_Consumption", out float cons) ? cons : 100f;
+            var consumption = parser.TryGetFloat("Power_Consumption", out float cons) ? cons : 0f;
             if(parser.HasEntry("WiredBuild RemoteTransmitter"))
             {
                 var range = parser.TryGetFloat("Transmitter_Range_Meters", out float ran) ? ran : 50f;

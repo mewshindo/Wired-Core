@@ -30,7 +30,7 @@ namespace Wired.Wrappers
             if (_wiredInteractable != null)
             {
                 _wiredInteractable.SetPowered(powered);
-                WiredLogger.Log($"Set wired interactable {(_wiredInteractable.interactable != null ? _wiredInteractable.interactable.name : "null")} to {(powered ? "ON" : "OFF")}");
+                WiredLogger.Info($"Set wired interactable {(_wiredInteractable.interactable != null ? _wiredInteractable.interactable.name : "null")} to {(powered ? "ON" : "OFF")}");
             }
             if (_spot != null)
             {

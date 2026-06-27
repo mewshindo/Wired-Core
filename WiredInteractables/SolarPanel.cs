@@ -63,32 +63,41 @@ namespace Wired.WiredInteractables
 
         private void OnTimeOfDayUpdated(uint timeOfDay, float timefraction)
         {
-            var efficiency = GetSolarPanelEfficiency(out float sunangle);
+            RotateMovingPart(out float sunangle);
             
+            var efficiency = GetSolarPanelEfficiency(sunangle);
+
             var newsupply = Asset.Supply * efficiency;
             _supplierNode.Supply = newsupply;
             NodeConnectionsService.RecalculatePowerForNode(_supplierNode);
 
             if (MovingPart == null) return;
 
-            RotateMovingPart(sunangle, LevelLighting.azimuth);
+            WiredLogger.Info($"Current supply: {_supplierNode.Supply}");
         }
 
-        private float GetSolarPanelEfficiency(out float sunangle)
+        private float GetSolarPanelEfficiency(float sunangle)
+        {
+            Quaternion sunRotation = Quaternion.Euler(-sunangle, LevelLighting.azimuth, 0f);
+            Vector3 sunDirection = sunRotation * Vector3.forward;
+
+            if(MovingPart != null)
+            {
+                PanelNormal = new Vector3(-MovingPart.forward.x, MovingPart.forward.y, -MovingPart.forward.z);
+            }
+
+            float dot = Vector3.Dot(PanelNormal, sunDirection.normalized);
+
+            WiredLogger.Info($"Efficiency: {Mathf.Max(0f, dot)}, PanelNormal direction: {PanelNormal}, sunDirection: {sunDirection}");
+
+            return Mathf.Max(0f, dot);
+        }
+        private void RotateMovingPart(out float sunangle)
         {
             var bias = LevelLighting.bias;
             var truetime = (float)LightingManager.time / (float)LightingManager.cycle;
             sunangle = Math.Abs((truetime / bias * 180f) / 1f - bias);
 
-            Quaternion sunRotation = Quaternion.Euler(-sunangle, LevelLighting.azimuth, 0f);
-            Vector3 sunDirection = sunRotation * Vector3.forward;
-
-            float dot = Vector3.Dot(PanelNormal, sunDirection.normalized);
-
-            return Mathf.Max(0f, dot);
-        }
-        private void RotateMovingPart(float sunangle, float azimuth)
-        {
             if (MovingPart == null) return;
 
             if(sunangle - 90f > Asset.MovingPartMaxAngle)
@@ -98,7 +107,7 @@ namespace Wired.WiredInteractables
             }
             _movesToDefaultPosition = false;
 
-            Quaternion sunRotation = Quaternion.Euler(-sunangle, azimuth, 0f);
+            Quaternion sunRotation = Quaternion.Euler(-sunangle, LevelLighting.azimuth, 0f);
 
             Vector3 sunWorldDirection = sunRotation * Vector3.forward;
 

@@ -13,6 +13,7 @@ namespace Wired.Models
         public bool IsPowered { get; set; } = true;
         public float Consumption { get; set; }
         public bool AllowPowerThrough { get; set; } = true;
+        public Vector3 WireConnectPoint { get; set; }
 
         private ConsumerInteractable Interactable;
         public void SetPowered(bool powered)
@@ -24,6 +25,9 @@ namespace Wired.Models
         {
             InstanceID = BarricadeManager.FindBarricadeByRootTransform(this.transform).instanceID;
             Interactable = new ConsumerInteractable(this.transform);
+
+            var p = transform.Find("WireConnectPoint");
+            if (p != null) WireConnectPoint = p.position;
         }
     }
 }

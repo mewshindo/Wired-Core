@@ -16,7 +16,8 @@ namespace Wired.Models
         public float Consumption { get; set; }
         public ushort DelaySeconds { get; set; }
         public bool AllowPowerThrough { get; private set; }
-        
+        public Vector3 WireConnectPoint { get; set; }
+
         private bool _isCountingDown;
 
         private InteractableSign _display;
@@ -39,6 +40,9 @@ namespace Wired.Models
                     $"Fix immediately!!! >:(");
             }
             InstanceID = BarricadeManager.FindBarricadeByRootTransform(this.transform).instanceID;
+
+            var p = transform.Find("WireConnectPoint");
+            if( p != null) WireConnectPoint = p.position;
         }
         public void StartTimer()
         {
@@ -49,7 +53,7 @@ namespace Wired.Models
             _isCountingDown = true;
             AllowPowerThrough = false;
 
-            WiredLogger.Log($"TimerNode {InstanceID} starting countdown");
+            WiredLogger.Info($"TimerNode {InstanceID} starting countdown");
             _remainingTime = DelaySeconds;
             _coroutine = StartCoroutine(TimerCoroutine());
         }
@@ -84,7 +88,7 @@ namespace Wired.Models
             _coroutine = null;
             Plugin.Instance.SendTimerExpired(this);
 
-            WiredLogger.Log($"TimerNode {InstanceID} Countdown finished");
+            WiredLogger.Info($"TimerNode {InstanceID} Countdown finished");
         }
 
         private string FormattedTime()
