@@ -39,6 +39,11 @@ namespace Wired
                     targetTransform = targetTransform.parent.parent;
                 }
             }
+            if(targetTransform.parent != null && targetTransform.name == "Clip")
+            {
+                targetTransform = targetTransform.parent;
+            }
+
             hitDistance = hit.distance;
             return BarricadeManager.FindBarricadeByRootTransform(targetTransform);
         }

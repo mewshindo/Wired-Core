@@ -32,7 +32,7 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
 
     }
 
-    private void Awake()
+    private void Start()
     {
         if (!TryGetComponent(out InteractableSpot spot))
         {
@@ -44,7 +44,22 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
         Plugin.OnTimeOfDayUpdated += OnTimeOfDayUpdated;
         _supplierNode = gameObject.GetComponent<SupplierNode>();
 
-        _MovingPartGameobj = transform.Find("MovingPart");
+        if (Asset.HasMovingPart)
+        {
+            _MovingPartGameobj = transform.Find("MovingPart");
+        }
+        else
+        {
+            var pn = transform.Find("PanelNormal");
+            if (pn != null)
+            {
+                PanelNormal = pn.forward;
+            }
+            else
+            {
+                WiredLogger.Error("PanelNormal GameObject not found");
+            }
+        }
 
         BarricadeDrop.OnSalvageRequested_Global += OnSalvageRequested_Global;
         OnTimeOfDayUpdated(LightingManager.time, (float)LightingManager.time / (float)LightingManager.cycle);
@@ -52,6 +67,7 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
 
     private void OnSalvageRequested_Global(BarricadeDrop barricade, SteamPlayer instigatorClient, ref bool shouldAllow)
     {
+        if (!Asset.HasMovingPart) return;
         if(barricade.model == MovingPart)
         {
             shouldAllow = false;
@@ -87,8 +103,12 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
 
     private void OnTimeOfDayUpdated(uint timeOfDay, float timefraction)
     {
-        RotateMovingPart(out float sunangle);
-        
+        var bias = LevelLighting.bias;
+        var truetime = (float)LightingManager.time / (float)LightingManager.cycle;
+        float sunangle = Math.Abs((truetime / bias * 180f) / 1f - bias);
+
+        if(Asset.HasMovingPart) RotateMovingPart(sunangle);
+
         var efficiency = GetSolarPanelEfficiency(sunangle);
 
         var newsupply = Asset.Supply * efficiency;
@@ -114,7 +134,7 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
         Quaternion sunRotation = Quaternion.Euler(-sunangle, LevelLighting.azimuth, 0f);
         Vector3 sunDirection = sunRotation * Vector3.forward;
 
-        if(MovingPart != null)
+        if(Asset.HasMovingPart)
         {
             PanelNormal = new Vector3(-MovingPart.forward.x, MovingPart.forward.y, -MovingPart.forward.z);
         }
@@ -125,14 +145,8 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
 
         return Mathf.Max(0f, dot);
     }
-    private void RotateMovingPart(out float sunangle)
+    private void RotateMovingPart(float sunangle)
     {
-        var bias = LevelLighting.bias;
-        var truetime = (float)LightingManager.time / (float)LightingManager.cycle;
-        sunangle = Math.Abs((truetime / bias * 180f) / 1f - bias);
-
-        if (MovingPart == null) return;
-
         if(sunangle - 90f > Asset.MovingPartMaxAngle)
         {
             _movesToDefaultPosition = true;
