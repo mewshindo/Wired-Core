@@ -6,7 +6,6 @@ using Wired.Models;
 using Wired.Services;
 using Wired.Utilities;
 using Wired.WiredAssets;
-using static UnityEngine.Rendering.VirtualTexturing.Debugging;
 
 namespace Wired.WiredInteractables;
 
