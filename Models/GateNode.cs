@@ -33,7 +33,10 @@ namespace Wired.Models
         {
             AllowPowerThrough = state;
             if(_spot != null)
-                BarricadeManager.ServerSetSpotPowered(_spot, state);
+            {
+                if(_spot.isPowered != state)
+                    BarricadeManager.ServerSetSpotPowered(_spot, state);
+            }
 
             Plugin.Instance.SendGateToggled(this, state);
         }

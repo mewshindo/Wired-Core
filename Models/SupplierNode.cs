@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Wired.Services;
 using Wired.WiredAssets;
+using Wired.WiredInteractables;
 
 namespace Wired.Models
 {
@@ -26,9 +27,12 @@ namespace Wired.Models
         {
             IsPowered = powered;
 
+            if (this.Asset is BatteryAsset) return;
+
             if(_interactable is InteractableSpot spot)
             {
-                BarricadeManager.ServerSetSpotPowered(spot, powered);
+                if(spot.isPowered != powered)
+                    BarricadeManager.ServerSetSpotPowered(spot, powered);
             }
         }
         public void Uninitialize()

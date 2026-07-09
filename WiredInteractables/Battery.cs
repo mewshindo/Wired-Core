@@ -14,7 +14,7 @@ namespace Wired.WiredInteractables;
 
 public class Battery : MonoBehaviour, IWiredInteractable
 {
-    public Interactable interactable { get; }
+    public Interactable interactable { get; private set; }
     public bool IsOn { get; }
     public BatteryState State { get; private set; }
 
@@ -32,6 +32,7 @@ public class Battery : MonoBehaviour, IWiredInteractable
     {
         _supplierNode = GetComponent<SupplierNode>();
         _asset = (BatteryAsset)_supplierNode.Asset;
+        interactable = GetComponent<Interactable>();
 
         Plugin.OnTimeOfDayUpdated += OnTimeOfDayUpdated;
 
@@ -42,7 +43,7 @@ public class Battery : MonoBehaviour, IWiredInteractable
         }
 
         MaxCapacity = _asset.Capacity;
-        MaxBurnPerSecond = _asset.MaxBurnPerSecond * 100;
+        MaxBurnPerSecond = _asset.MaxBurnPerSecond * 10;
         Supply = _asset.Supply;
         Charge = MaxCapacity;
     }
@@ -66,14 +67,32 @@ public class Battery : MonoBehaviour, IWiredInteractable
             State = BatteryState.Idle;
             _supplierNode.Supply = 0f;
         }
-        else if (State == BatteryState.Idle)
+        else if (Charge > 0 && State == BatteryState.Idle)
         {
-            NodeConnectionsService.RecalculatePowerForNode(_supplierNode);
             _supplierNode.Supply = _asset.Supply;
+            NodeConnectionsService.RecalculatePowerForNode(_supplierNode);
         }
         else
         {
             _supplierNode.Supply = _asset.Supply;
+        }
+
+        if(interactable is InteractableSpot spot)
+        {
+            if (Charge > 0)
+            {
+                if (!spot.isPowered)
+                {
+                    BarricadeManager.ServerSetSpotPowered(spot, true);
+                }
+            }
+            else
+            {
+                if (spot.isPowered)
+                {
+                    BarricadeManager.ServerSetSpotPowered(spot, false);
+                }
+            }
         }
     }
 

@@ -20,7 +20,8 @@ namespace Wired.Models
         public void SetPowered(bool powered)
         {
             IsPowered = powered;
-            Interactable.SetPowered(powered);
+            if(Interactable.IsPowered != powered)
+                Interactable.SetPowered(powered);
         }
         private void Awake()
         {

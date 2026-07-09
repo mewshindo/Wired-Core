@@ -596,7 +596,10 @@ public class PlayerViewService : MonoBehaviour
 
 
                     EffectManager.sendUIEffectText(Resources.GogglesUIKey, Provider.findTransportConnection(steamid), true, "Name_Supplier", $"{drop.asset.FriendlyName}");
-                    EffectManager.sendUIEffectText(Resources.GogglesUIKey, Provider.findTransportConnection(steamid), true, "Stat_Supplier_Supply", $"{Math.Round(sup.Supply, 1)}pu");
+                    if(sup.TryGetComponent(out Battery battery))
+                        EffectManager.sendUIEffectText(Resources.GogglesUIKey, Provider.findTransportConnection(steamid), true, "Stat_Supplier_Supply", $"{Math.Round(battery.Charge, 1)}; {Math.Round(sup.Supply, 1)}");
+                    else    
+                        EffectManager.sendUIEffectText(Resources.GogglesUIKey, Provider.findTransportConnection(steamid), true, "Stat_Supplier_Supply", $"{Math.Round(sup.Supply, 1)}pu");
                     EffectManager.sendUIEffectText(Resources.GogglesUIKey, Provider.findTransportConnection(steamid), true, "Stat_Supplier_Powered", sup.Supply > 0f ? "Yes" : "No");
                     EffectManager.sendUIEffectVisibility(Resources.GogglesUIKey, Provider.findTransportConnection(steamid), true, "Box_Supplier", true);
                 }

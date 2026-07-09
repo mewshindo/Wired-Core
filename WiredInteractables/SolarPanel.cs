@@ -158,7 +158,8 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
     {
         if(sunangle - 90f > _asset.MovingPartMaxAngle)
         {
-            _movesToDefaultPosition = true;
+            if(LightingManager.isNighttime)
+                _movesToDefaultPosition = true;
             return;
         }
         _movesToDefaultPosition = false;
