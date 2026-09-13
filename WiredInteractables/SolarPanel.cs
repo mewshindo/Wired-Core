@@ -29,7 +29,12 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
     public Transform MovingPart;
     private Transform _MovingPartGameobj;
 
-    private bool _movesToDefaultPosition;
+
+    private float _currentPitch;
+    private float _lastPitch;
+    private float _movingPartTargetPitch;
+
+    private float _lastBarricadeTransformCalled;
 
     public void SetPowered(bool state)
     {
@@ -85,6 +90,9 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
 
             MovingPart = movingPartTransform;
             PanelNormal = movingPartTransform.up;
+
+            _currentPitch = _MovingPartGameobj.localEulerAngles.x;
+            _movingPartTargetPitch = _currentPitch;
         }
         else
         {
@@ -126,17 +134,23 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
 
     private void Update()
     {
-        if (!_movesToDefaultPosition) return;
-        if(Math.Abs(_MovingPartGameobj.localEulerAngles.x) < 1f)
+        if(Math.Abs(Mathf.DeltaAngle(_currentPitch, _movingPartTargetPitch)) < 1f)
         {
-            _movesToDefaultPosition = false;
             return;
         }
 
-        var angleDelta = _MovingPartGameobj.localEulerAngles.x > 180 ? 1f : -1f;
+        _currentPitch = Mathf.LerpAngle(_currentPitch, _movingPartTargetPitch, Time.deltaTime);
 
-        _MovingPartGameobj.Rotate(new Vector3(angleDelta, 0, 0), Space.Self);
-        BarricadeManager.ServerSetBarricadeTransform(MovingPart, _MovingPartGameobj.position, _MovingPartGameobj.rotation);
+        _MovingPartGameobj.localEulerAngles = new Vector3(_currentPitch, 0, 0);
+
+        MovingPart.position = _MovingPartGameobj.position;
+        MovingPart.rotation = _MovingPartGameobj.rotation;
+
+        _lastBarricadeTransformCalled = Time.realtimeSinceStartup;
+        BarricadeManager.ServerSetBarricadeTransform(MovingPart, MovingPart.position, MovingPart.rotation);
+        //if(Time.realtimeSinceStartup - _lastBarricadeTransformCalled > 0.1f)
+        //{
+        //}
     }
 
     private void OnTimeOfDayUpdated(uint timeOfDay, float timefraction)
@@ -203,20 +217,19 @@ public class SolarPanel : MonoBehaviour, IWiredInteractable
     {
         if(Math.Abs(sunangle - 90f) > _asset.MovingPartMaxAngle)
         {
-            if(LightingManager.isNighttime)
-                _movesToDefaultPosition = true;
             return;
         }
-        _movesToDefaultPosition = false;
 
         Quaternion sunRotation = Quaternion.Euler(-sunangle, LevelLighting.azimuth, 0f);
 
         Vector3 sunWorldDirection = sunRotation * Vector3.forward;
 
         _MovingPartGameobj.rotation = Quaternion.LookRotation(-sunWorldDirection, Vector3.up);
-        _MovingPartGameobj.localEulerAngles = new Vector3(_MovingPartGameobj.localEulerAngles.x, 0, 0);
+        _movingPartTargetPitch = _MovingPartGameobj.localEulerAngles.x;
 
-        BarricadeManager.ServerSetBarricadeTransform(MovingPart, _MovingPartGameobj.position, _MovingPartGameobj.rotation);
+        _MovingPartGameobj.localEulerAngles = new Vector3(_currentPitch, 0, 0);
+
+        // BarricadeManager.ServerSetBarricadeTransform(MovingPart, _MovingPartGameobj.position, _MovingPartGameobj.rotation);
     }
     public void Uninitialize()
     {
