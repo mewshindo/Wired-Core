@@ -206,6 +206,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>scp -o StrictHostKeyChecking=no -P 2022 -i "C:\Users\hellr\.ssh\id_ed25519" "$(TargetPath)" "mew.03d29ec1@43.245.225.143:/Servers/DevServer/Rocket/Plugins/"  || exit 0</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\U3DS\Servers\Default\Rocket\Plugins"
+</PostBuildEvent>
   </PropertyGroup>
 </Project>

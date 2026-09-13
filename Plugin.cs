@@ -61,6 +61,9 @@ namespace Wired
         public delegate void BarricadeDestroyed(BarricadeDrop barricade);
         public static event BarricadeDestroyed OnBarricadeDestroyed;
 
+        public delegate void PlayerStanceChanged(PlayerStance stance);
+        public static event PlayerStanceChanged OnPlayerStanceChanged;
+
         protected override void Load()
         {
             Instance = this;
@@ -104,6 +107,7 @@ namespace Wired
 
             Instance = null;
         }
+
         private void OnLevelLoaded(int lvl)
         {
             if (!Provider.getServerWorkshopFileIDs().Contains(3583223837))
@@ -147,14 +151,21 @@ namespace Wired
             return;
         }
 
-        private void OnPlayerDisconnected(UnturnedPlayer player)
-        {
-        }
-
         private void OnPlayerConnected(UnturnedPlayer player)
         {
             ITransportConnection connection = player.Player.channel.owner.transportConnection;
             EffectManager.SendUIEffect(Resources.goggles_ui, Resources.GogglesUIKey, connection, true);
+            player.Player.stance.onStanceUpdated += () => onStanceUpdated(player);
+        }
+
+        private void OnPlayerDisconnected(UnturnedPlayer player)
+        {
+            player.Player.stance.onStanceUpdated -= () => onStanceUpdated(player);
+        }
+
+        private void onStanceUpdated(UnturnedPlayer player)
+        {
+            OnPlayerStanceChanged?.Invoke(player.Player.stance);
         }
 
         private void OnModifySignRequested(CSteamID instigator, InteractableSign sign, ref string text, ref bool shouldAllow)

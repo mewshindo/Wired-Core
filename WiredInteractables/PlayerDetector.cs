@@ -14,79 +14,113 @@ namespace Wired.WiredInteractables;
 /// <summary>
 /// ADD THIS CLASS ONTO 'Detector' GAMEOBJECT, NOT ONTO THE ROOT BARRICADE TRANSFORM!!!!!!!!!!!!!!!!!!!!
 /// </summary>
-public class PlayerDetector : MonoBehaviour, IWiredInteractable
+public class PlayerDetector : MonoBehaviour
 {
-    public Interactable interactable { get; private set; }
-    private Collider _collider;
+    public float Radius = 1f;
+    public bool Inverted;
+
+    public event Action<PlayerDetector> OnPlayerDetected;
+    public event Action<PlayerDetector> OnPlayerUnDetected;
+
+    private InteractableSpot interactable;
     private GateNode _switchNode;
-    public bool IsOn {  get; private set; }
+    private Collider _collider;
 
-    // ----- Detector config -----
-    public float Radius { get; set; }
-    public bool Inverted { get; set; }
-
-    // ---------------------------
-
-    public delegate void PlayerDetected(PlayerDetector detector);
-    public static event PlayerDetected OnPlayerDetected;
-
-    public delegate void PlayerUnDetected(PlayerDetector detector);
-    public static event PlayerUnDetected OnPlayerUnDetected;
-    public void SetPowered(bool state) { }
+    private readonly HashSet<Collider> knownColliders = new();
 
     private void Awake()
     {
         interactable = GetComponentInParent<InteractableSpot>();
-        if (GetComponent<Collider>() != null)
-        {
-            _collider = GetComponent<Collider>();
-            _collider.isTrigger = true;
-        }
-        else
-        {
-            _collider = gameObject.AddComponent<SphereCollider>();
-            _collider.isTrigger = true;
-            ((SphereCollider)_collider).radius = Radius;
-        }
         _switchNode = GetComponentInParent<GateNode>();
+
         if (_switchNode == null)
         {
-            WiredLogger.Error("Playerdetector couldn't find a switchnode");
+            WiredLogger.Error("PlayerDetector couldn't find a switch node");
             Destroy(gameObject);
+            return;
         }
-        _collider.transform.gameObject.layer = 30;
-        _collider.transform.gameObject.tag = "Trap";
+
+        _collider = GetComponent<Collider>();
+        if (_collider == null)
+        {
+            var sphere = gameObject.AddComponent<SphereCollider>();
+            sphere.radius = Radius;
+            _collider = sphere;
+        }
+        _collider.isTrigger = true;
+
+        _collider.gameObject.layer = 30;
+        _collider.gameObject.tag = "Trap";
+
+        Plugin.OnPlayerStanceChanged += HandlePlayerStanceChanged;
     }
 
-    public void OnTriggerEnter(Collider other)
+    private void OnDestroy()
     {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            BarricadeManager.ServerSetSpotPowered((InteractableSpot)interactable, true);
-            _switchNode.Switch(Inverted ? false : true);
-            OnPlayerDetected?.Invoke(this);
-        }
-        else
+        Plugin.OnPlayerStanceChanged -= HandlePlayerStanceChanged;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.CompareTag("Player"))
         {
             WiredLogger.Info($"Ignored object {other.gameObject.name} with tag {other.gameObject.tag}");
+            return;
         }
+
+        if (knownColliders.Add(other))
+            Detect();
     }
-    public void OnTriggerExit(Collider other)
+
+    private void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            BarricadeManager.ServerSetSpotPowered((InteractableSpot)interactable, false);
-            _switchNode.Switch(Inverted ? true : false);
-            OnPlayerUnDetected?.Invoke(this);
-        }
-        else
+        if (!other.CompareTag("Player"))
         {
             WiredLogger.Info($"Ignored object {other.gameObject.name} with tag {other.gameObject.tag}");
+            return;
+        }
+
+        if (knownColliders.Remove(other) && knownColliders.Count == 0)
+            UnDetect();
+    }
+
+    private void HandlePlayerStanceChanged(PlayerStance stance)
+    {
+        var controller = stance.player.movement.controller;
+        bool intersects = _collider.bounds.Intersects(controller.bounds);
+        bool known = knownColliders.Contains(controller);
+
+        if (intersects && !known)
+        {
+            knownColliders.Add(controller);
+            Detect();
+        }
+        else if (!intersects && known)
+        {
+            knownColliders.Remove(controller);
+            if (knownColliders.Count == 0)
+                UnDetect();
         }
     }
+
+    private void Detect()
+    {
+        BarricadeManager.ServerSetSpotPowered(interactable, true);
+        _switchNode.Switch(!Inverted);
+        OnPlayerDetected?.Invoke(this);
+    }
+
+    private void UnDetect()
+    {
+        BarricadeManager.ServerSetSpotPowered(interactable, false);
+        _switchNode.Switch(Inverted);
+        OnPlayerUnDetected?.Invoke(this);
+    }
+
     public void Uninitialize()
     {
-        Destroy(_collider);
+        Plugin.OnPlayerStanceChanged -= HandlePlayerStanceChanged;
+        if (_collider != null) Destroy(_collider);
         Destroy(this);
     }
 }
