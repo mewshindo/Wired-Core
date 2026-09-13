@@ -29,6 +29,10 @@ namespace Wired.Services
             new ConsumerAsset(new Guid("d3c40816534e48c3af0e26fb4d5f1b1a"), 25), // Clock
             new ConsumerAsset(new Guid("1f8856edf5964774aa2457b37e45603b"), 400), // Safezone Radiator
             new ConsumerAsset(new Guid("ea56c734f3614983a5381bbce91ba79a"), 400), // Oxygenator
+
+            new ConsumerAsset(new Guid("5a7281e9af4c435b8cb7f9f5acf05aa9"), 400), // Friendly Sentry
+            new ConsumerAsset(new Guid("0c005ae5e4c74575af53ffe2144fad0b"), 400), // Neutral Sentry
+            new ConsumerAsset(new Guid("8f7670d2dabc449d8f38c8cb656c6acf"), 400), // Hostile Sentry
         ];
         public WiredAssetsService()
         {

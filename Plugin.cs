@@ -230,6 +230,21 @@ namespace Wired
                 return false;
             }
         }
+        [HarmonyPatch(typeof(InteractableSentry), "ScanForTargets")]
+        public class Patch_InteractableSentry_ScanForTargets
+        {
+            public static bool Prefix(InteractableSentry __instance, Vector3 fromPoint)
+            {
+                if (__instance.TryGetComponent(out ConsumerNode node))
+                {
+                    if (node.IsPowered)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
 
         [HarmonyPatch(typeof(InteractableGenerator), "askBurn")]
         public static class Property_Patch

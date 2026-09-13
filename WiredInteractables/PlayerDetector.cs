@@ -26,7 +26,7 @@ public class PlayerDetector : MonoBehaviour
     private GateNode _switchNode;
     private Collider _collider;
 
-    private readonly HashSet<Collider> knownColliders = new();
+    private readonly HashSet<Collider> _knownColliders = new();
 
     private void Awake()
     {
@@ -53,6 +53,18 @@ public class PlayerDetector : MonoBehaviour
         _collider.gameObject.tag = "Trap";
 
         Plugin.OnPlayerStanceChanged += HandlePlayerStanceChanged;
+        Plugin.OnTimeOfDayUpdated += OnTimeOfDayUpdated;
+    }
+
+    private void OnTimeOfDayUpdated(uint timeOfDay, float timefraction)
+    {
+        foreach(var collider in _knownColliders)
+        {
+            if (!_collider.bounds.Intersects(collider.bounds))
+            {
+                _knownColliders.Remove(collider);
+            }
+        }
     }
 
     private void OnDestroy()
@@ -68,7 +80,7 @@ public class PlayerDetector : MonoBehaviour
             return;
         }
 
-        if (knownColliders.Add(other))
+        if (_knownColliders.Add(other))
             Detect();
     }
 
@@ -80,7 +92,7 @@ public class PlayerDetector : MonoBehaviour
             return;
         }
 
-        if (knownColliders.Remove(other) && knownColliders.Count == 0)
+        if (_knownColliders.Remove(other) && _knownColliders.Count == 0)
             UnDetect();
     }
 
@@ -88,17 +100,17 @@ public class PlayerDetector : MonoBehaviour
     {
         var controller = stance.player.movement.controller;
         bool intersects = _collider.bounds.Intersects(controller.bounds);
-        bool known = knownColliders.Contains(controller);
+        bool known = _knownColliders.Contains(controller);
 
         if (intersects && !known)
         {
-            knownColliders.Add(controller);
+            _knownColliders.Add(controller);
             Detect();
         }
         else if (!intersects && known)
         {
-            knownColliders.Remove(controller);
-            if (knownColliders.Count == 0)
+            _knownColliders.Remove(controller);
+            if (_knownColliders.Count == 0)
                 UnDetect();
         }
     }

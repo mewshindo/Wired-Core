@@ -344,7 +344,8 @@ namespace Wired.Services
                    model.GetComponent<InteractableOven>() != null ||
                    model.GetComponent<InteractableOxygenator>() != null ||
                    model.GetComponent<InteractableSafezone>() != null ||
-                   model.GetComponent<InteractableCharge>() != null;
+                   model.GetComponent<InteractableCharge>() != null ||
+                   model.GetComponent<InteractableSentry>() != null;
         }
     }
 }
