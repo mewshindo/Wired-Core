@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Reflection;
 using HarmonyLib;
@@ -18,9 +19,10 @@ using Wired.WiredInteractables;
 
 namespace Wired
 {
-    public class Plugin : RocketPlugin<Config>
+    public class Plugin : RocketPlugin
     {
         public static Plugin Instance;
+        public Config Configuration;
         private Harmony _harmony;
 
         private bool _levelLoaded;
@@ -67,6 +69,7 @@ namespace Wired
         protected override void Load()
         {
             Instance = this;
+            Configuration = ConfigManager.Load<Config>(Path.Combine(Instance.Directory, "conf.yaml"));
 
             if(_harmony == null)
             {
@@ -131,7 +134,7 @@ namespace Wired
         private void Update()
         {
             if (!_levelLoaded) return;
-            if (fpr < Configuration.Instance.RecalculationRateLimit)
+            if (fpr < Configuration.RecalculationRateLimit)
                 fpr++;
             else
             {

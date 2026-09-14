@@ -31,7 +31,7 @@ namespace Wired.Services
             PlayerViewService = new GameObject("PlayerViewService").AddComponent<PlayerViewService>();
             PlayerViewService.Init(WiredAssetsService, resources, NodeConnectionsService, WiringToolService.SelectedNode);
             KeypadUIService = new();
-            WindService = new();
+            WindService = new(Plugin.Instance.Configuration.WindConfig.WindSpeedChangeRate, Plugin.Instance.Configuration.WindConfig.NoiseMapScale);
             JsonService = new(NodeConnectionsService, Path.Combine(Plugin.Instance.Directory, $"Nodes_{Provider.map}.json"));
             JsonService.LoadFromJson();
             WiredDeltaService = new GameObject("WiredDeltaService").AddComponent<WiredDeltaService>();

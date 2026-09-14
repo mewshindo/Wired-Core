@@ -7,10 +7,10 @@ using UnityEngine;
 
 namespace Wired.Services
 {
-    public class WindService
+    public class WindService(float windSpeedChargeRate = 0.02f, float noiseMapScale = 0.005f)
     {
-        private float _windSpeed = 0.02f;
-        private float _spatialScale = 0.005f;
+        private float _windSpeedChangeRate = windSpeedChargeRate;
+        private float _noiseMapScale = noiseMapScale;
 
         public struct WindData
         {
@@ -20,9 +20,9 @@ namespace Wired.Services
 
         public WindData GetWindAt(Vector3 position)
         {
-            float timeOffset = Time.time * _windSpeed;
-            float sampleX = position.x * _spatialScale + timeOffset;
-            float sampleZ = position.z * _spatialScale + timeOffset;
+            float timeOffset = Time.time * _windSpeedChangeRate;
+            float sampleX = position.x * _noiseMapScale + timeOffset;
+            float sampleZ = position.z * _noiseMapScale + timeOffset;
 
             float intensity = Mathf.PerlinNoise(sampleX, sampleZ);
 

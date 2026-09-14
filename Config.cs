@@ -4,16 +4,32 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using YamlDotNet.Serialization;
 
 namespace Wired;
 
-public class Config : IRocketPluginConfiguration, IDefaultable
+public class Config : IDefaultable
 {
-    public bool LogDebugMessages;
-    public ushort RecalculationRateLimit;
+    public bool LogDebugMessages { get; set; }
+    public ushort RecalculationRateLimit { get; set; }
+    public WindConfig WindConfig { get; set; }
+
     public void LoadDefaults()
     {
-        RecalculationRateLimit = 1;
         LogDebugMessages = true;
+        RecalculationRateLimit = 1;
+
+        WindConfig = new WindConfig
+        {
+            WindSpeedChangeRate = 0.02f,
+            NoiseMapScale = 0.005f
+        };
     }
+}
+
+public class WindConfig
+{
+    public float WindSpeedChangeRate;
+
+    public float NoiseMapScale;
 }

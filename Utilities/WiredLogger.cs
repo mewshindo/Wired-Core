@@ -12,7 +12,7 @@ namespace Wired.Utilities
     {
         public static void Info(string message)
         {
-            if (!Plugin.Instance.Configuration.Instance.LogDebugMessages) return;
+            if (!Plugin.Instance.Configuration.LogDebugMessages) return;
             Logger.Log($"[Wired]: {message}");
         }
         public static void Warn(string message)

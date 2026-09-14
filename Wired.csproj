@@ -43,6 +43,7 @@
     <Compile Include="Services\WindService.cs" />
     <Compile Include="Services\WiredAssetsService.cs" />
     <Compile Include="Services\WiredDeltaService.cs" />
+    <Compile Include="Utilities\ConfigManager.cs" />
     <Compile Include="WiredAssets\Placeables\BatteryAsset.cs" />
     <Compile Include="WiredAssets\Placeables\BatteryChargerAsset.cs" />
     <Compile Include="WiredAssets\Items\EngineerGogglesAsset.cs" />
@@ -202,6 +203,10 @@
     <Reference Include="UnturnedDat, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\UnturnedDat.dll</HintPath>
+    </Reference>
+    <Reference Include="YamlDotNet, Version=18.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Libs\YamlDotNet.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
