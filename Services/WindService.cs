@@ -7,10 +7,10 @@ using UnityEngine;
 
 namespace Wired.Services
 {
-    public class WindService(float windSpeedChargeRate = 0.02f, float noiseMapScale = 0.005f)
+    public class WindService(float windSpeedChargeRate = 1f, float noiseMapScale = 1f)
     {
-        private float _windSpeedChangeRate = windSpeedChargeRate;
-        private float _noiseMapScale = noiseMapScale;
+        private float _windSpeedChangeRate = windSpeedChargeRate / 200f;
+        private float _noiseMapScale = noiseMapScale / 100000f;
 
         public struct WindData
         {

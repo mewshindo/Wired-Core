@@ -17,6 +17,7 @@ using Rocket.Core.Assets;
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using SDG.NetTransport;
+using static SDG.Unturned.WeatherAsset;
 
 namespace Wired.Services;
 
@@ -62,10 +63,9 @@ public class PlayerViewService : MonoBehaviour
         if (buttonName.EndsWith("_Close"))
         {
             WiredLogger.Info($"Received effect button click, \"{buttonName}\", trying to find {buttonName.Replace("_Close", string.Empty)}");
-            if(_resources.PonderEffects.TryGetValue(buttonName.Replace("_Close", string.Empty), out EffectAsset asset))
+            if (_resources.PonderEffects.TryGetValue(buttonName.Replace("_Close", string.Empty), out EffectAsset asset))
             {
-                EffectManager.ClearEffectByGuid(asset.GUID, player.channel.owner.transportConnection);
-                player.setPluginWidgetFlag(EPluginWidgetFlags.Modal, false);
+                ClearPonderScene(player, asset);
             }
         }
     }
@@ -690,7 +690,7 @@ public class PlayerViewService : MonoBehaviour
                 }
                 break;
             case GateNode sw:
-                SendGogglesUIText(steamid, "Text_Name", $"<color=#6AFF2A>{drop.asset.FriendlyName}");
+                SendGogglesUIText(steamid, "Text_Name", $"<color=#2ACAFF>{drop.asset.FriendlyName}");
                 SendGogglesUIText(steamid, "Text_0", $"Gate: " + (sw.AllowPowerThrough ? "<color=#00eeff>Open" : "<color=#00eeff>Closed"));
                 if(sw.TryGetComponent(out RemoteReceiver receiver))
                 {
@@ -724,6 +724,12 @@ public class PlayerViewService : MonoBehaviour
                     if(dns.IsObstructed)
                         SendGogglesUIText(steamid, "Text_2", $"Sunlight obstructed");
                 }
+                break;
+            case TimerNode tn:
+                SendGogglesUIText(steamid, "Text_Name", $"<color=#2ACAFF>{drop.asset.FriendlyName}");
+                SendGogglesUIText(steamid, "Text_0", $"Gate: " + (tn.AllowPowerThrough ? "<color=#00eeff>Open" : "<color=#00eeff>Closed"));
+                SendGogglesUIText(steamid, "Text_1", $"Delay: <color=#00eeff>{tn.DelaySeconds} seconds");
+
                 break;
             default:
                 break;
@@ -808,8 +814,21 @@ public class PlayerViewService : MonoBehaviour
         }
         EffectManager.sendUIEffectText(Resources.GogglesUIKey, Provider.findTransportConnection(steamid), true, gameobjorpath, text);
     }
+
+    private void SendPonderScene(Player player, EffectAsset scene)
+    {
+        if (scene == null) return;
+        EffectManager.SendUIEffect(scene, PonderUIKey, player.channel.owner.transportConnection, true);
+        player.setPluginWidgetFlag(EPluginWidgetFlags.Modal, true);
+    }
+    private void ClearPonderScene(Player player, EffectAsset asset)
+    {
+        EffectManager.ClearEffectByGuid(asset.GUID, player.channel.owner.transportConnection);
+        player.setPluginWidgetFlag(EPluginWidgetFlags.Modal, false);
+    }
     private bool DoesOwnDrop(BarricadeDrop drop, CSteamID steamid)
     {
+        return true;
         var dropdata = drop.GetServersideData();
         if (dropdata.owner != 0 && dropdata.owner == (ulong)steamid)
             return true;

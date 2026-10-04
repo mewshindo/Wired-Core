@@ -22,20 +22,29 @@ public class PlayerDetector : MonoBehaviour
     public event Action<PlayerDetector> OnPlayerDetected;
     public event Action<PlayerDetector> OnPlayerUnDetected;
 
-    private InteractableSpot interactable;
+    private InteractableSpot _interactable;
     private GateNode _switchNode;
     private Collider _collider;
+
+    private bool _state;
 
     private readonly HashSet<Collider> _knownColliders = new();
 
     private void Awake()
     {
-        interactable = GetComponentInParent<InteractableSpot>();
+        _interactable = GetComponentInParent<InteractableSpot>();
         _switchNode = GetComponentInParent<GateNode>();
 
         if (_switchNode == null)
         {
             WiredLogger.Error("PlayerDetector couldn't find a switch node");
+            Destroy(gameObject);
+            return;
+        }
+
+        if (_interactable == null)
+        {
+            WiredLogger.Error("PlayerDetector couldn't find an interactable");
             Destroy(gameObject);
             return;
         }
@@ -58,18 +67,9 @@ public class PlayerDetector : MonoBehaviour
 
     private void OnTimeOfDayUpdated(uint timeOfDay, float timefraction)
     {
-        foreach(var collider in _knownColliders)
-        {
-            if (!_collider.bounds.Intersects(collider.bounds))
-            {
-                _knownColliders.Remove(collider);
-            }
-        }
-    }
-
-    private void OnDestroy()
-    {
-        Plugin.OnPlayerStanceChanged -= HandlePlayerStanceChanged;
+        var removed = _knownColliders.RemoveWhere(c => c == null || !_collider.bounds.Intersects(c.bounds));
+        if (removed > 0 && _knownColliders.Count == 0)
+            UnDetect();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -117,14 +117,18 @@ public class PlayerDetector : MonoBehaviour
 
     private void Detect()
     {
-        BarricadeManager.ServerSetSpotPowered(interactable, true);
+        if(_state == true) return;
+        _state = true;
+        BarricadeManager.ServerSetSpotPowered(_interactable, true);
         _switchNode.Switch(!Inverted);
         OnPlayerDetected?.Invoke(this);
     }
 
     private void UnDetect()
     {
-        BarricadeManager.ServerSetSpotPowered(interactable, false);
+        if(_state == false) return;
+        _state = false;
+        BarricadeManager.ServerSetSpotPowered(_interactable, false);
         _switchNode.Switch(Inverted);
         OnPlayerUnDetected?.Invoke(this);
     }
@@ -132,6 +136,7 @@ public class PlayerDetector : MonoBehaviour
     public void Uninitialize()
     {
         Plugin.OnPlayerStanceChanged -= HandlePlayerStanceChanged;
+        Plugin.OnTimeOfDayUpdated -= OnTimeOfDayUpdated;
         if (_collider != null) Destroy(_collider);
         Destroy(this);
     }

@@ -57,17 +57,20 @@ namespace Wired.WiredInteractables
         {
             var wind = Plugin.Instance.Services.WindService.GetWindAt(transform.position);
 
-            Efficiency = Math.Min(1, Math.Abs(Vector3.Dot(-_turbine.forward, wind.Direction)) * wind.Intensity * 2);
+            if(-_turbine.forward.y == -1) // for those that don't care about wind direction
+                Efficiency = wind.Intensity;
+            else
+                Efficiency = Math.Min(1, Math.Abs(Vector3.Dot(-_turbine.forward, wind.Direction)) * wind.Intensity * 2);
             WiredLogger.Info($"Efficiency: {Efficiency}, Forward: {-_turbine.forward}, Wind: {wind.Direction}, Dot: {Vector3.Dot(-_turbine.forward, wind.Direction)}");
             var newsupply = _asset.Supply * Efficiency;
             _supplierNode.Supply = (float)Math.Round(newsupply);
-            if (_supplierNode.Supply <= 0f)
-            {
-                _supplierNode.SetPowered(false);
-            }
-            else if (_supplierNode.Supply > 0f)
+            if (Efficiency >= .05)
             {
                 _supplierNode.SetPowered(true);
+            }
+            else
+            {
+                _supplierNode.SetPowered(false);
             }
 
             NodeConnectionsService.RecalculatePowerForNode(_supplierNode);
