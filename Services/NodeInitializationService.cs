@@ -221,7 +221,7 @@ namespace Wired.Services
                     {
                         var bca = barricade.model.gameObject.AddComponent<ConsumerNode>();
                         bca.barricade = barricade;
-                        barricade.model.gameObject.AddComponent<BatteryCharger>();
+                        barricade.model.gameObject.AddComponent<CarBatteryCharger>();
                         bca.Asset = batteryChargerAsset;
                         bca.SetPowered(false);
                         bca.Consumption = bca.Consumption;

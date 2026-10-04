@@ -58,7 +58,7 @@ namespace Wired.WiredInteractables
             var wind = Plugin.Instance.Services.WindService.GetWindAt(transform.position);
 
             if(-_turbine.forward.y == -1) // for those that don't care about wind direction
-                Efficiency = wind.Intensity;
+                Efficiency = Math.Min(wind.Intensity*2, 1);
             else
                 Efficiency = Math.Min(1, Math.Abs(Vector3.Dot(-_turbine.forward, wind.Direction)) * wind.Intensity * 2);
             WiredLogger.Info($"Efficiency: {Efficiency}, Forward: {-_turbine.forward}, Wind: {wind.Direction}, Dot: {Vector3.Dot(-_turbine.forward, wind.Direction)}");

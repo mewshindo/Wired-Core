@@ -35,6 +35,7 @@ public class LogicGateSubnode : MonoBehaviour, IElectricNode
     public void SetPowered(bool powered)
     {
         IsPowered = powered;
+        ParentNode.SetPowered(true);
     }
 
     private void Start()

@@ -89,7 +89,7 @@
     <Compile Include="WiredAssets\Placeables\RemoteTransmitterAsset.cs" />
     <Compile Include="WiredAssets\Placeables\WindTurbineAsset.cs" />
     <Compile Include="WiredInteractables\Battery.cs" />
-    <Compile Include="WiredInteractables\BatteryCharger.cs" />
+    <Compile Include="WiredInteractables\CarBatteryCharger.cs" />
     <Compile Include="WiredInteractables\Button.cs" />
     <Compile Include="WiredInteractables\DaylightSensor.cs" />
     <Compile Include="WiredInteractables\IWiredInteractable.cs" />

@@ -170,7 +170,7 @@ namespace Wired.Services
                 }
                 WiredLogger.Info($"Found wired asset: {asset.name} ({asset.GUID}) as Type Gate; Build LogicGate");
             }
-            else if (parser.HasEntry("DaylightSensor"))
+            else if (parser.HasEntry("WiredBuild DaylightSensor"))
             {
                 WiredAssets.Add(asset.GUID,
                 new DaylightSensorAsset(

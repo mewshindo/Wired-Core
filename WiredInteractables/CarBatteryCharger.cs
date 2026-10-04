@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Wired.WiredInteractables;
 
-public class BatteryCharger : MonoBehaviour, IWiredInteractable
+public class CarBatteryCharger : MonoBehaviour, IWiredInteractable
 {
     public Interactable interactable { get; private set; }
     private ItemJar battery;

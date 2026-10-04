@@ -15,14 +15,15 @@ internal class NetworkAnalyzer : MonoBehaviour, IWiredInteractable
     private ConsumerNode _consumer;
 
     private InteractableSign _display;
+    private InteractableSpot _spot;
 
     public void SetPowered(bool state)
     {
-        if(interactable is InteractableSpot spot && spot != null)
+        if(_spot != null)
         {
-            if(spot.isPowered != state)
+            if(_spot.isPowered != state)
             {
-                BarricadeManager.ServerSetSpotPowered(spot, state);
+                BarricadeManager.ServerSetSpotPowered(_spot, state);
             }
         }
         if(_display != null && state == false)
@@ -48,6 +49,7 @@ internal class NetworkAnalyzer : MonoBehaviour, IWiredInteractable
             return;
         }
         interactable = spot;
+        _spot = spot;
         _consumer = GetComponent<ConsumerNode>();
 
         if(_consumer.Asset is NetworkAnalyzerAsset naa)
