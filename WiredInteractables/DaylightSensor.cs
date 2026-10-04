@@ -30,7 +30,7 @@ namespace Wired.WiredInteractables
         private void OnTimeOfDayUpdated(uint timeOfDay, float timefraction)
         {
             Raycast raycast = new(null, 64);
-            if(!raycast.GetPoint(out _))
+            if(!raycast.GetPoint(transform.position, Vector3.up, out _))
             {
                 IsObstructed = false;
                 SetPowered(LightingManager.isDaytime == (_asset.Mode == DaylightSensorMode.Day));

@@ -295,9 +295,10 @@ public class PlayerViewService : MonoBehaviour
             UpdateNodesView(obj.player.channel.owner.playerID.steamID);
         }
     }
-    private void OnNodeSelectionCleared(UnturnedPlayer player)
+    private void OnNodeSelectionCleared(UnturnedPlayer player, bool clear = true)
     {
-        NPCEventManager.BroadcastEvent(player.Player, "WiringTool:Clear", ENPCEventReplicationMode.InstigatorOnly);
+        if(clear)
+            NPCEventManager.BroadcastEvent(player.Player, "WiringTool:Clear", ENPCEventReplicationMode.InstigatorOnly);
         _playersInLinkingMode.Remove(player);
         _lookingAt.Remove(player.CSteamID);
         ClearPreviewView(player.CSteamID);

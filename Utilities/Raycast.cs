@@ -67,5 +67,15 @@ namespace Wired
             point = hitInfo.point;
             return true;
         }
+        public bool GetPoint(Vector3 position, Vector3 direction, out Vector3 point)
+        {
+            point = Vector3.zero;
+            if (!Physics.Raycast(position, direction, out var hitInfo, Range, RayMasks.BLOCK_COLLISION))
+            {
+                return false;
+            }
+            point = hitInfo.point;
+            return true;
+        }
     }
 }

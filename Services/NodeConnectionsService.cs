@@ -157,10 +157,12 @@ namespace Wired.Services
             if (existingConnection != null)
             {
                 DisconnectNodes(player, existingConnection);
+                NPCEventManager.BroadcastEvent(player.Player, "WiringTool:Message_Unlinked", ENPCEventReplicationMode.InstigatorOnly);
             }
             else
             {
                 ConnectNodes(player, node1, node2, wirepath);
+                NPCEventManager.BroadcastEvent(player.Player, "WiringTool:Message_Linked", ENPCEventReplicationMode.InstigatorOnly);
             }
         }
 

@@ -19,7 +19,7 @@ namespace Wired.Services
         public delegate void NodeSelectedHandler(UnturnedPlayer player, Transform nodeTransform);
         public static event NodeSelectedHandler OnNodeSelected;
 
-        public delegate void SelectionClearRequestedHandler(UnturnedPlayer player);
+        public delegate void SelectionClearRequestedHandler(UnturnedPlayer player, bool clear = false);
         public static event SelectionClearRequestedHandler OnNodeSelectionClearRequested;
 
         public delegate void NodeConnectionRequestedHandler(UnturnedPlayer player, IElectricNode node1, IElectricNode node2, List<Vector3> wirepath);
@@ -52,7 +52,6 @@ namespace Wired.Services
             if (!gun.isAiming) return;
 
             var uplayer = UnturnedPlayer.FromPlayer(gun.player);
-            ClearSelection(uplayer);
             OnNodeSelectionClearRequested?.Invoke(uplayer);
         }
 
@@ -76,6 +75,7 @@ namespace Wired.Services
 
         private bool DoesOwnDrop(BarricadeDrop drop, CSteamID steamid)
         {
+            return true;
             var dropdata = drop.GetServersideData();
             if (dropdata.owner != 0 && dropdata.owner == (ulong)steamid)
                 return true;
@@ -182,10 +182,9 @@ namespace Wired.Services
                 path = [];
 
             OnNodeLinkRequested?.Invoke(player, electricnode1, electricnode2, path);
-            OnNodeSelectionClearRequested?.Invoke(player);
-            ClearSelection(player);
+            OnNodeSelectionClearRequested?.Invoke(player, false);
         }
-        private void ClearSelection(UnturnedPlayer player)
+        private void ClearSelection(UnturnedPlayer player, bool clear)
         {
             SelectedNode.Remove(player.CSteamID);
         }
