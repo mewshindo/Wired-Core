@@ -16,6 +16,7 @@ namespace Wired.Wrappers
         private readonly InteractableOxygenator _oxygenator = barricade.GetComponent<InteractableOxygenator>();
         private readonly InteractableSafezone _safezone = barricade.GetComponent<InteractableSafezone>();
         private readonly InteractableCharge _charge = barricade.GetComponent<InteractableCharge>();
+        private readonly InteractableSentry _sentry = barricade.GetComponent<InteractableSentry>();
         private readonly IWiredInteractable _wiredInteractable = barricade.GetComponent<IWiredInteractable>();
         public bool IsPowered { get; private set; }
         public void SetPowered(bool powered)
@@ -45,6 +46,13 @@ namespace Wired.Wrappers
             {
                 BarricadeManager.ServerSetSafezonePowered(_safezone, powered);
                 IsPowered = powered;
+            }
+            if (_sentry != null)
+            {
+                if (!IsPowered)
+                {
+                    _sentry.
+                }
             }
             if (_charge != null && powered == true)
                 _charge.Detonate(null);

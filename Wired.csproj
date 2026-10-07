@@ -44,6 +44,7 @@
     <Compile Include="Services\WiredAssetsService.cs" />
     <Compile Include="Services\WiredDeltaService.cs" />
     <Compile Include="Utilities\ConfigManager.cs" />
+    <Compile Include="Utilities\SentryTools.cs" />
     <Compile Include="WiredAssets\Placeables\BatteryAsset.cs" />
     <Compile Include="WiredAssets\Placeables\BatteryChargerAsset.cs" />
     <Compile Include="WiredAssets\Items\EngineerGogglesAsset.cs" />

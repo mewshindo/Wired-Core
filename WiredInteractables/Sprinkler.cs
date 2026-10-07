@@ -52,6 +52,7 @@ public class Sprinkler : MonoBehaviour, IWiredInteractable
     public static void HandleSprinklers()
     {
         Stopwatch sw = Stopwatch.StartNew();
+        HashSet<BarricadeDrop> seen = [];
         foreach(var sprinkler in SprinklersRegistry)
         {
             if(!sprinkler.IsOn) continue;
@@ -59,11 +60,13 @@ public class Sprinkler : MonoBehaviour, IWiredInteractable
             var crops = finder.GetBarricadesInRadius(sprinkler.Radius);
             foreach(var crop in crops)
             {
+                if (seen.Contains(crop)) continue;
                 if (!crop.model.TryGetComponent(out InteractableFarm farm)) continue;
                 if(farm.IsFullyGrown) continue;
 
                 var newplanted = farm.planted - 3 > 3 ? farm.planted - 3 : 1;
                 BarricadeManager.updateFarm(farm.transform, newplanted, true);
+                seen.Add(crop);
             }
         }
         sw.Stop();
