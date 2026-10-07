@@ -24,12 +24,12 @@ public static class SentryTools
         CompileAction("targetVehicle", ref setTargetVehicle);
     }
 
-    static void CompileAction<T>(string methodName, ref Action<InteractableSentry,T> target)
+    static void CompileAction<T>(string fieldName, ref Action<InteractableSentry,T> target)
     {
-        FieldInfo fieldInfo = typeof(Animal).GetField("targetPlayer", BindingFlags.NonPublic | BindingFlags.Instance);
+        FieldInfo fieldInfo = typeof(InteractableSentry).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
 
         ParameterExpression instanceParam = Expression.Parameter(typeof(InteractableSentry), "instance");
-        ParameterExpression valueParam = Expression.Parameter(typeof(Player), "value");
+        ParameterExpression valueParam = Expression.Parameter(typeof(T), "value");
 
         MemberExpression fieldAccess = Expression.Field(instanceParam, fieldInfo);
 

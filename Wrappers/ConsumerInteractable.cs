@@ -51,7 +51,10 @@ namespace Wired.Wrappers
             {
                 if (!IsPowered)
                 {
-                    _sentry.
+                    SentryTools.setTargetPlayer(_sentry, null);
+                    SentryTools.setTargetZombie(_sentry, null);
+                    SentryTools.setTargetAnimal(_sentry, null);
+                    SentryTools.setTargetVehicle(_sentry, null);
                 }
             }
             if (_charge != null && powered == true)
