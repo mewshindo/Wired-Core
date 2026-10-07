@@ -78,7 +78,6 @@ namespace Wired.Services
                     {
                         Node1ID = id1,
                         Node2ID = id2,
-                        WirePath = conn.WirePath.Select(v => new float[] { v.x, v.y, v.z }).ToList(),
                         AdditionalData = additionalData
                     });
                 }
@@ -125,10 +124,6 @@ namespace Wired.Services
 
                 if (hasNode1 && hasNode2)
                 {
-                    List<Vector3> path = data.WirePath?
-                        .Select(arr => new Vector3(arr[0], arr[1], arr[2]))
-                        .ToList() ?? new List<Vector3>();
-
                     if (data.AdditionalData.Contains("Node1_is_Input_0"))
                     {
                         node1 = ((GateNode)node1).GetComponent<LogicGate>().Input0;
@@ -146,7 +141,7 @@ namespace Wired.Services
                         node2 = ((GateNode)node2).GetComponent<LogicGate>().Input1;
                     }
 
-                    _service.LoadConnection(node1, node2, path, data.AdditionalData);
+                    _service.LoadConnection(node1, node2);
                     restoredCount++;
                 }
                 else
@@ -180,7 +175,5 @@ namespace Wired.Services
         public uint Node2ID;
         [SerializeField] 
         public string AdditionalData;
-        [SerializeField]
-        public List<float[]> WirePath;
     }
 }

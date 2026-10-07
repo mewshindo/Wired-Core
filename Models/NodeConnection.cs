@@ -7,10 +7,8 @@ namespace Wired.Models
     {
         public IElectricNode Node1 { get; set; }
         public IElectricNode Node2 { get; set; }
-        public List<Vector3> WirePath { get; }
-        public NodeConnection(List<Vector3> wirePath, IElectricNode node1, IElectricNode node2)
+        public NodeConnection(IElectricNode node1, IElectricNode node2)
         {
-            WirePath = wirePath ?? new List<Vector3>();
             Node1 = node1;
             Node2 = node2;
         }

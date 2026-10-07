@@ -161,18 +161,18 @@ namespace Wired.Services
             }
             else
             {
-                ConnectNodes(player, node1, node2, wirepath);
+                ConnectNodes(player, node1, node2);
                 NPCEventManager.BroadcastEvent(player.Player, "WiringTool:Message_Linked", ENPCEventReplicationMode.InstigatorOnly);
             }
         }
 
-        public void LoadConnection(IElectricNode node1, IElectricNode node2, List<Vector3> wirePath, string additionalData)
+        public void LoadConnection(IElectricNode node1, IElectricNode node2)
         {
-            ConnectNodes(null, node1, node2, wirePath);
+            ConnectNodes(null, node1, node2);
         }
-        private void ConnectNodes(UnturnedPlayer player, IElectricNode node1, IElectricNode node2, List<Vector3> wirePath)
+        private void ConnectNodes(UnturnedPlayer player, IElectricNode node1, IElectricNode node2)
         {
-            NodeConnection connection = new(wirePath ?? [], node1, node2);
+            NodeConnection connection = new(node1, node2);
 
             _nodeToNetwork.TryGetValue(node1, out ElectricNetwork net1);
             _nodeToNetwork.TryGetValue(node2, out ElectricNetwork net2);
